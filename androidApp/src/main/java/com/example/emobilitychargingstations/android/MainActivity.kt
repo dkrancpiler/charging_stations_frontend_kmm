@@ -5,26 +5,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.car.app.connection.CarConnection
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.comsystoreply.emobilitychargingstations.android.BuildConfig
 import com.comsystoreply.emobilitychargingstations.android.MyApplicationTheme
-import com.example.emobilitychargingstations.android.ui.composables.FilteringOptionsComposable
-import com.example.emobilitychargingstations.android.ui.composables.MapViewComposable
-import com.example.emobilitychargingstations.android.ui.composables.StationsFilterComposable
+import com.example.emobilitychargingstations.android.ui.composables.NavigationHostComposable
+import com.example.emobilitychargingstations.android.ui.composables.CarConnectionComposable
 import com.example.emobilitychargingstations.android.ui.utilities.LocationRequestStarter
-import com.example.emobilitychargingstations.models.ChargerTypesEnum
 import com.example.emobilitychargingstations.models.UserLocation
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
@@ -37,21 +27,20 @@ class MainActivity : ComponentActivity() {
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             locationResult.locations.firstOrNull()?.let {
-                if (checkIsLocationMockDebug(it))  {
-                    val isInitialUserLocationNull = stationsViewModel.userLocation.value == null
+                if (checkIsDebugLocationMocked(it))  {
                     stationsViewModel.setUserLocation(
                         UserLocation(
                             it.latitude,
                             it.longitude
                         )
                     )
-                    if (isInitialUserLocationNull) stationsViewModel.startRepeatingStationsRequest()
+                    stationsViewModel.startRepeatingStationsRequest()
                 }
             }
         }
     }
 
-    private fun checkIsLocationMockDebug(location: Location) : Boolean {
+    private fun checkIsDebugLocationMocked(location: Location) : Boolean {
         return if (BuildConfig.DEBUG) location.isMock else true
     }
 
@@ -63,7 +52,7 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             when {
                 permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] == true -> {
-                    startRepeatingRequests()
+                    startRequestingLocation()
                     setContent {
                         MyApplicationTheme {
                             val navController = rememberNavController()
@@ -73,9 +62,11 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Column {
                                     NavigationHostComposable(navController, startDestination)
-                                    ObserveCarConnectionComposable(
+                                    CarConnectionComposable(
                                         navController,
-                                        userInfo?.filterProperties?.chargerType
+                                        userInfo?.filterProperties?.chargerType,
+                                        stationsViewModel::stopRepeatingStationsRequest,
+                                        stationsViewModel::startRepeatingStationsRequest
                                     )
                                 }
                             }
@@ -87,68 +78,15 @@ class MainActivity : ComponentActivity() {
         Configuration.getInstance().userAgentValue = BuildConfig.APPLICATION_ID
     }
 
-    @Composable
-    private fun ObserveCarConnectionComposable(navController: NavHostController, chargerType: ChargerTypesEnum?) {
-        val carConnection = CarConnection(this).type.observeAsState()
-        if (chargerType != null) when (carConnection.value) {
-            CarConnection.CONNECTION_TYPE_PROJECTION -> {
-                stationsViewModel.stopRepeatingStationsRequest()
-                navController.currentDestination?.route?.let {
-                    navController.popBackStack(
-                        it, true)
-                }
-                navController.navigate(NAVIGATE_TO_FILTER_SCREEN)
-            }
-            else -> {
-                if (navController.currentBackStackEntry?.destination?.route != NAVIGATE_TO_MAP_SCREEN) {
-                    navController.navigate(NAVIGATE_TO_MAP_SCREEN)
-                    stationsViewModel.startRepeatingStationsRequest()
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun NavigationHostComposable(navController: NavHostController, startDestination: String) = NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
-        composable("$NAVIGATE_TO_CHARGER_SELECTION?$ARGUMENT_NAVIGATE_TO_NEXT={$ARGUMENT_NAVIGATE_TO_NEXT}", arguments = listOf(
-            navArgument(ARGUMENT_NAVIGATE_TO_NEXT) {
-                type = NavType.BoolType
-                defaultValue = true
-            }
-        )) { backStackEntry ->
-            val shouldNavigateToMap = backStackEntry.arguments?.getBoolean(ARGUMENT_NAVIGATE_TO_NEXT)
-            FilteringOptionsComposable(proceedToNextScreen = {
-                if (shouldNavigateToMap == true) navController.navigate(
-                    NAVIGATE_TO_MAP_SCREEN
-                ) else navController.popBackStack()
-            })
-        }
-        composable(NAVIGATE_TO_MAP_SCREEN) {
-            MapViewComposable(proceedToSocketSelection = {
-                navController.navigate(
-                    NAVIGATE_TO_FILTER_SCREEN
-                )
-            })
-        }
-        composable(NAVIGATE_TO_FILTER_SCREEN) {
-            StationsFilterComposable(navigateToChargerType = {
-                navController.navigate(
-                    "$NAVIGATE_TO_CHARGER_SELECTION?$ARGUMENT_NAVIGATE_TO_NEXT=false")
-            })
-        }
-    }
-
-    private fun startRepeatingRequests() {
+    private fun startRequestingLocation() {
         LocationRequestStarter(this, locationCallback)
     }
-    companion object {
-        private const val NAVIGATE_TO_CHARGER_SELECTION = "chargerSelectionScreen"
-        private const val NAVIGATE_TO_MAP_SCREEN = "mapScreen"
-        private const val NAVIGATE_TO_FILTER_SCREEN = "filterScreen"
 
-        private const val ARGUMENT_NAVIGATE_TO_NEXT = "navigateToNext"
+    companion object {
+        const val NAVIGATE_TO_CHARGER_SELECTION = "chargerSelectionScreen"
+        const val NAVIGATE_TO_MAP_SCREEN = "mapScreen"
+        const val NAVIGATE_TO_FILTER_SCREEN = "filterScreen"
+
+        const val ARGUMENT_NAVIGATE_TO_NEXT = "navigateToNext"
     }
 }

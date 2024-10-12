@@ -1,4 +1,4 @@
-package com.example.emobilitychargingstations.android.ui.composables
+package com.example.emobilitychargingstations.android.ui.composables.screens
 
 import android.content.Context
 import androidx.appcompat.content.res.AppCompatResources
@@ -75,7 +75,7 @@ private fun mapViewWithLifecycle(stations: List<Station>?, userLocation: UserLoc
         }
     }
     mapView.apply {
-        minZoomLevel = 9.00
+        minZoomLevel = 10.00
         maxZoomLevel = 15.00
         isHorizontalMapRepetitionEnabled = false
         isVerticalMapRepetitionEnabled = false
@@ -125,12 +125,10 @@ private fun addUserMarker (mapView: MapView, userLocation: GeoPoint, shouldZoomI
 
 }
 
-private fun Overlay.findNumberOfMarkersOnMap() = ((this as FolderOverlay?)?.items?.first() as RadiusMarkerClusterer?)?.items?.size
 private fun addMarkersToMap(mapView: MapView, userLocation: GeoPoint, context: Context, stations: List<Station>) {
     val previousMarkerOverlay = mapView.overlays.firstOrNull { it is FolderOverlay && it.name == STATIONS_OVERLAY_NAME }
     val didStationDataChange = previousMarkerOverlay?.findNumberOfMarkersOnMap() != stations.size
-    addUserMarker(mapView, userLocation, didStationDataChange)
-    if (didStationDataChange) {
+    if (didStationDataChange && stations.isNotEmpty()) {
         val folderOverlay = FolderOverlay()
         folderOverlay.name = STATIONS_OVERLAY_NAME
         val markerCluster = RadiusMarkerClusterer(context)
@@ -155,4 +153,7 @@ private fun addMarkersToMap(mapView: MapView, userLocation: GeoPoint, context: C
             add(folderOverlay)
         }
     }
+    addUserMarker(mapView, userLocation, didStationDataChange)
 }
+
+private fun Overlay.findNumberOfMarkersOnMap() = ((this as FolderOverlay?)?.items?.first() as RadiusMarkerClusterer?)?.items?.size

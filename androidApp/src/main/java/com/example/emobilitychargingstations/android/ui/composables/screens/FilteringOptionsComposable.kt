@@ -1,4 +1,4 @@
-package com.example.emobilitychargingstations.android.ui.composables
+package com.example.emobilitychargingstations.android.ui.composables.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,9 +34,9 @@ fun FilteringOptionsComposable(proceedToNextScreen: () -> Unit, viewModel: Stati
         listOfButtonsInfo.add(ChargerTypeToggleInfo(chargerType == it, it))
     }
     val socketTypeButtons = remember {
-        val mutableStateList = mutableStateListOf<ChargerTypeToggleInfo>()
-        mutableStateList.addAll(listOfButtonsInfo)
-        mutableStateList
+        val listOfButtonsAsStateList = mutableStateListOf<ChargerTypeToggleInfo>()
+        listOfButtonsAsStateList.addAll(listOfButtonsInfo)
+        listOfButtonsAsStateList
     }
 
     Box {

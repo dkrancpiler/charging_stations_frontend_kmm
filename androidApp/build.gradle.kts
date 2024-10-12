@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.comsystoreply.emobilitychargingstations.android"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         applicationId = "com.comsystoreply.emobilitychargingstations.android"
         minSdk = 31

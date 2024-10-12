@@ -1,4 +1,4 @@
-package com.example.emobilitychargingstations.android.ui.composables
+package com.example.emobilitychargingstations.android.ui.composables.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
