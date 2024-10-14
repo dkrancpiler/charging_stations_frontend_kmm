@@ -1,4 +1,4 @@
-package com.example.emobilitychargingstations.android.ui.composables
+package com.example.emobilitychargingstations.android.ui.composables.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,23 +20,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.comsystoreply.emobilitychargingstations.android.R
-import com.example.emobilitychargingstations.android.StationsViewModel
 import com.example.emobilitychargingstations.android.models.ChargerTypeToggleInfo
-import com.example.emobilitychargingstations.android.ui.composables.reusables.getActivityViewModel
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargerType
+import com.example.emobilitychargingstations.android.ui.viewmodels.UserViewModel
 import com.example.emobilitychargingstations.models.ChargerTypesEnum
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun FilteringOptionsComposable(proceedToNextScreen: () -> Unit, viewModel: StationsViewModel = getActivityViewModel()) {
+fun FilteringOptionsComposable(proceedToNextScreen: () -> Unit, userViewModel: UserViewModel = koinViewModel()) {
     val listOfButtonsInfo = mutableListOf<ChargerTypeToggleInfo>()
-    val chargerType = viewModel.getUserInfo()?.filterProperties?.chargerType
-    ChargerTypesEnum.values().forEach {
+    val chargerType = userViewModel.getUserInfo()?.filterProperties?.chargerType
+    ChargerTypesEnum.entries.forEach {
         listOfButtonsInfo.add(ChargerTypeToggleInfo(chargerType == it, it))
     }
     val socketTypeButtons = remember {
-        val mutableStateList = mutableStateListOf<ChargerTypeToggleInfo>()
-        mutableStateList.addAll(listOfButtonsInfo)
-        mutableStateList
+        val listOfButtonsAsStateList = mutableStateListOf<ChargerTypeToggleInfo>()
+        listOfButtonsAsStateList.addAll(listOfButtonsInfo)
+        listOfButtonsAsStateList
     }
 
     Box {
@@ -55,7 +55,7 @@ fun FilteringOptionsComposable(proceedToNextScreen: () -> Unit, viewModel: Stati
                     enabled = socketTypeButtons.any { toggleInfo -> toggleInfo.isChecked },
                     onClick = {
                         socketTypeButtons.firstOrNull { toggleInfo -> toggleInfo.isChecked }?.chargerType?.let {
-                            viewModel.setChargerType(it)
+                            userViewModel.setChargerType(it)
                         }
                         proceedToNextScreen()
                     }

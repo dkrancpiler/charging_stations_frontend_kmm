@@ -1,20 +1,21 @@
-package com.example.emobilitychargingstations.android
+package com.example.emobilitychargingstations.android.ui.viewmodels
 
+import android.location.Location
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.comsystoreply.emobilitychargingstations.android.BuildConfig
 import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
-import com.example.emobilitychargingstations.models.ChargerTypesEnum
-import com.example.emobilitychargingstations.models.ChargingTypeEnum
 import com.example.emobilitychargingstations.models.Station
 import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 
 class StationsViewModel(
@@ -30,7 +31,27 @@ class StationsViewModel(
 
     private var stationsJob: Job? = null
 
-    fun setUserLocation(newUserLocation: UserLocation) {
+    val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            locationResult.locations.firstOrNull()?.let {
+                if (checkIsDebugLocationMocked(it))  {
+                    setUserLocation(
+                        UserLocation(
+                            it.latitude,
+                            it.longitude
+                        )
+                    )
+                    startRepeatingStationsRequest()
+                }
+            }
+        }
+    }
+
+    private fun checkIsDebugLocationMocked(location: Location) : Boolean {
+        return if (BuildConfig.DEBUG) location.isMock else true
+    }
+
+    private fun setUserLocation(newUserLocation: UserLocation) {
         stationsUseCase.setTemporaryLocation(newUserLocation)
         _userLocation.value = newUserLocation
     }
@@ -45,18 +66,6 @@ class StationsViewModel(
     fun stopRepeatingStationsRequest() {
         stationsJob?.cancel()
         stationsJob = null
-    }
-
-    fun setChargerType(chargerName: ChargerTypesEnum) {
-        viewModelScope.launch {
-            userUseCase.setChargerType(chargerName)
-        }
-    }
-
-    fun setChargingType(chargingType: ChargingTypeEnum) {
-        viewModelScope.launch {
-            userUseCase.setChargingType(chargingType)
-        }
     }
 
     fun getUserInfo(): UserInfo? = userUseCase.getUserInfo()
