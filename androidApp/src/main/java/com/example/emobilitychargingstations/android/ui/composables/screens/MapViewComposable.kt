@@ -19,9 +19,9 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.comsystoreply.emobilitychargingstations.android.R
-import com.example.emobilitychargingstations.android.StationsViewModel
-import com.example.emobilitychargingstations.android.ui.composables.reusables.getActivityViewModel
+import com.example.emobilitychargingstations.android.ui.viewmodels.StationsViewModel
 import com.example.emobilitychargingstations.android.ui.composables.reusables.ProgressBarComposable
+import com.example.emobilitychargingstations.android.ui.composables.reusables.getActivityViewModel
 import com.example.emobilitychargingstations.data.extensions.getLatitude
 import com.example.emobilitychargingstations.data.extensions.getLongitude
 import com.example.emobilitychargingstations.models.Station

@@ -22,17 +22,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.comsystoreply.emobilitychargingstations.android.R
-import com.example.emobilitychargingstations.android.StationsViewModel
 import com.example.emobilitychargingstations.android.models.ChargingTypeToggleInfo
-import com.example.emobilitychargingstations.android.ui.composables.reusables.getActivityViewModel
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargingType
+import com.example.emobilitychargingstations.android.ui.viewmodels.UserViewModel
 import com.example.emobilitychargingstations.models.ChargingTypeEnum
-
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun StationsFilterComposable(viewModel: StationsViewModel = getActivityViewModel(), navigateToChargerType: () -> Unit) {
-    val userInfo = viewModel.getUserInfo()
+fun StationsFilterComposable(userViewModel: UserViewModel = koinViewModel(), navigateToChargerType: () -> Unit) {
+    val userInfo = userViewModel.getUserInfo()
     Box {
         val context = LocalContext.current
         Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
@@ -66,11 +65,11 @@ fun ChargingTypeFilterComposable(chargingTypeEnum: ChargingTypeEnum?) {
 }
 
 @Composable
-fun ChargingTypeButtonsComposable(socketTypeButtons: SnapshotStateList<ChargingTypeToggleInfo>, viewModel: StationsViewModel = getActivityViewModel()) {
+fun ChargingTypeButtonsComposable(socketTypeButtons: SnapshotStateList<ChargingTypeToggleInfo>, userViewModel: UserViewModel = koinViewModel()) {
     socketTypeButtons.forEach { toggleInfo ->
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
             RadioButton(selected = toggleInfo.isChecked, onClick = {
-                viewModel.setChargingType(toggleInfo.chargingType)
+                userViewModel.setChargingType(toggleInfo.chargingType)
                 socketTypeButtons.replaceAll {
                     it.copy(isChecked = it.chargingType == toggleInfo.chargingType)
                 }

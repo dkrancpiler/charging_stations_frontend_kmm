@@ -56,7 +56,7 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
             if (userLocation != null) send(localStationsWithUserFilters?.getStationsClosestToUserLocation(userLocation))
             else send(localStationsWithUserFilters)
             launch {
-                userUseCase.getUserInfoAsFlow().onEach {userInfoChange ->
+                userUseCase.getUserInfoAsFlow().onEach { userInfoChange ->
                     if ((userInfo?.filterProperties?.chargingType != userInfoChange?.filterProperties?.chargingType
                                 || userInfo?.filterProperties?.chargerType != userInfoChange?.filterProperties?.chargerType)) {
                         userInfo = userInfoChange

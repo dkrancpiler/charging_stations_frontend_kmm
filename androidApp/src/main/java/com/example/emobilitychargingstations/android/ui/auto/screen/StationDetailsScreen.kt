@@ -12,10 +12,10 @@ import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
 import com.comsystoreply.emobilitychargingstations.android.R
 import com.example.emobilitychargingstations.android.ui.auto.BaseScreen
+import com.example.emobilitychargingstations.android.ui.utilities.AUTO_POI_MAP_SCREEN_MARKER
 import com.example.emobilitychargingstations.android.ui.utilities.buildRowWithText
 import com.example.emobilitychargingstations.android.ui.utilities.getFavoritesAction
 import com.example.emobilitychargingstations.android.ui.utilities.getString
-import com.example.emobilitychargingstations.android.ui.utilities.AUTO_POI_MAP_SCREEN_MARKER
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargingType
 import com.example.emobilitychargingstations.data.extensions.getChargingTypeFromMaxKW
 import com.example.emobilitychargingstations.data.extensions.getLatitude
