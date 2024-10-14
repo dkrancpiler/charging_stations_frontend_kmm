@@ -8,18 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.comsystoreply.emobilitychargingstations.android.BuildConfig
 import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
-import com.example.emobilitychargingstations.models.ChargerTypesEnum
-import com.example.emobilitychargingstations.models.ChargingTypeEnum
 import com.example.emobilitychargingstations.models.Station
 import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 
 class StationsViewModel(
