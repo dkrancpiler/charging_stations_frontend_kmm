@@ -6,11 +6,14 @@ import com.example.emobilitychargingstations.models.StationGeoData
 import com.example.emobilitychargingstations.models.StationProperties
 import com.example.emobilitychargingstations.models.Stations
 import com.example.emobilitychargingstations.models.StationsResponseModel
+import com.example.emobilitychargingstations.models.getEmptyProperties
 
-fun StationEntity.toStations(): Stations {
-    return Stations(
-        type = this.type,
-        features = this.features
+fun StationEntity.toStation(): Station {
+    return Station(
+        id = this.id,
+        geometry = StationGeoData("", coordinates = arrayOf(this.longitude ?: 0.0, this.latitude ?: 0.0)),
+        properties = this.properties ?: getEmptyProperties(),
+        type = ""
     )
 }
 

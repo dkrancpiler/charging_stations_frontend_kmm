@@ -12,6 +12,8 @@ import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
 import com.example.emobilitychargingstations.models.Station
 import com.example.emobilitychargingstations.models.StationFilterProperties
+import com.example.emobilitychargingstations.models.StationProperties
+import com.example.emobilitychargingstations.models.getEmptyProperties
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
@@ -34,16 +36,16 @@ fun provideApi(): StationsApi {
 
 fun provideDataSource(driver: SqlDriver): StationsDatabase {
     return StationsDatabase(driver, StationEntity.Adapter(
-        featuresAdapter = object : ColumnAdapter<List<Station>, String> {
-            override fun decode(databaseValue: String): List<Station> {
+        propertiesAdapter = object : ColumnAdapter<StationProperties, String> {
+            override fun decode(databaseValue: String): StationProperties {
                 return if (databaseValue.isEmpty()){
-                    listOf()
+                    getEmptyProperties()
                 } else {
-                    return Json.decodeFromString<List<Station>>(databaseValue)
+                    return Json.decodeFromString<StationProperties>(databaseValue)
                 }
             }
 
-            override fun encode(value: List<Station>): String {
+            override fun encode(value: StationProperties): String {
                 return Json.encodeToString(
                     value
                 )

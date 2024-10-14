@@ -32,15 +32,20 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
         )
     }
 
-    private suspend fun getStationsLocal(): Stations? {
-        var localStations = stationsRepository.getStationsLocal()
-        if (localStations == null) {
-            localStations = PlatformSpecificFunctions().getStationsFromJson()
-            localStations?.let {
+    private suspend fun getStationsLocal(userLocation: UserLocation): Stations? {
+        val checkIfStationsExist = stationsRepository.checkIfStationsExistLocally()
+        var localStations = stationsRepository.getStationsLocallyByLatLng(userLocation)
+        if (checkIfStationsExist != true) {
+            val stationsFromJson = PlatformSpecificFunctions().getStationsFromJson()
+            stationsFromJson?.let {
+                localStations = it.features!!
                 insertStations(it)
             }
         }
-        return localStations
+        return Stations(
+            "",
+            localStations
+        )
     }
 
     fun setTemporaryLocation(newLocation: UserLocation?) {
@@ -49,12 +54,11 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
 
     fun startRepeatingRequest(initialLocation: UserLocation?) = channelFlow {
         launch(Dispatchers.IO) {
-            val localStations = getStationsLocal()
+            val localStations = getStationsLocal(initialLocation!!)
             var userInfo = userUseCase.getUserInfo()
             val localStationsWithUserFilters = localStations?.copy()?.features?.applyUserFiltersToStations(userInfo)
             userLocation = initialLocation
-            if (userLocation != null) send(localStationsWithUserFilters?.getStationsClosestToUserLocation(userLocation))
-            else send(localStationsWithUserFilters)
+            send(localStationsWithUserFilters)
             launch {
                 userUseCase.getUserInfoAsFlow().onEach { userInfoChange ->
                     if ((userInfo?.filterProperties?.chargingType != userInfoChange?.filterProperties?.chargingType
@@ -77,7 +81,7 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
                     }
                 }
                 val resultingList = combineRemoteAndLocalStations(localStations?.features, remoteStations)
-                    .getStationsClosestToUserLocation(userLocation)
+//                    .getStationsClosestToUserLocation(userLocation)
                     .applyUserFiltersToStations(userInfo)
                 send(resultingList)
                 delay(STATION_REQUEST_REPEAT_TIME_MS)
