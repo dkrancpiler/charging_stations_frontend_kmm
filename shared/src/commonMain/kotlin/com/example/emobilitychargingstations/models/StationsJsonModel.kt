@@ -1,10 +1,8 @@
 package com.example.emobilitychargingstations.models
 
-import com.example.emobilitychargingstations.models.Station
-
 @kotlinx.serialization.Serializable
-data class Stations(
+data class StationsJsonModel(
     val type: String,
-    val features: List<Station>?
+    val features: List<StationJson>?
 )
 

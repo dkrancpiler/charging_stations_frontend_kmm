@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.comsystoreply.emobilitychargingstations.android.R
-import com.example.emobilitychargingstations.android.models.ChargingTypeToggleInfo
+import com.example.emobilitychargingstations.android.ui.models.ChargingTypeToggleInfo
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargingType
 import com.example.emobilitychargingstations.android.ui.viewmodels.UserViewModel
 import com.example.emobilitychargingstations.models.ChargingTypeEnum

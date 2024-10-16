@@ -8,12 +8,13 @@ import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Template
 import com.comsystoreply.emobilitychargingstations.android.R
+import com.example.emobilitychargingstations.android.mappers.toStationUIModel
 import com.example.emobilitychargingstations.android.ui.auto.BaseScreen
+import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
 import com.example.emobilitychargingstations.android.ui.utilities.buildClickableRowWithTextAndIcon
 import com.example.emobilitychargingstations.android.ui.utilities.getDrawableAsBitmap
 import com.example.emobilitychargingstations.android.ui.utilities.getMessageTemplateBuilderWithTitle
 import com.example.emobilitychargingstations.android.ui.utilities.getString
-import com.example.emobilitychargingstations.models.Station
 
 class FavoritesListScreen(carContext: CarContext, private val onScreenResultListener: OnScreenResultListener? = null): BaseScreen(carContext) {
 
@@ -21,7 +22,7 @@ class FavoritesListScreen(carContext: CarContext, private val onScreenResultList
         val userInfo = userUseCase.getUserInfo()
         val templateTitle = getString(R.string.auto_favorites_list_title)
         val templateForDisplay: Template =
-            if (userInfo?.favoriteStations == null || userInfo.favoriteStations.isNullOrEmpty())
+            if (userInfo?.favoriteStationJsons == null || userInfo.favoriteStationJsons.isNullOrEmpty())
                 getMessageTemplateBuilderWithTitle(templateTitle, getString(R.string.auto_favorites_list_empty_message)).build()
             else {
                 val listTemplateBuilder = ListTemplate.Builder()
@@ -29,16 +30,16 @@ class FavoritesListScreen(carContext: CarContext, private val onScreenResultList
                     setHeaderAction(Action.BACK)
                     setTitle(templateTitle)
                     setSingleList(ItemList.Builder().apply {
-                        userInfo.favoriteStations!!.forEach {favorite ->
+                        userInfo.favoriteStationJsons!!.forEach { favorite ->
                             addItem(
                                 buildClickableRowWithTextAndIcon(
-                                    title = SpannableString(favorite.properties.street),
-                                    text = favorite.properties.operator ?: "",
+                                    title = SpannableString(favorite.street),
+                                    text = favorite.operator ?: "",
                                     carIcon = getDrawableAsBitmap(
                                         R.drawable.electric_car_icon_white
                                     )!!
                                 ) {
-                                    onItemClick(favorite)
+                                    onItemClick(favorite.toStationUIModel())
                                 }
                             )
                         }
@@ -49,9 +50,9 @@ class FavoritesListScreen(carContext: CarContext, private val onScreenResultList
         return templateForDisplay
     }
 
-    private fun onItemClick(station: Station) {
-        if (onScreenResultListener != null) screenManager.pushForResult(StationDetailsScreen(carContext, station, true), onScreenResultListener)
-        else screenManager.push(StationDetailsScreen(carContext, station, true))
+    private fun onItemClick(stationJson: StationsUiModel) {
+        if (onScreenResultListener != null) screenManager.pushForResult(StationDetailsScreen(carContext, stationJson, true), onScreenResultListener)
+        else screenManager.push(StationDetailsScreen(carContext, stationJson, true))
     }
 }
 

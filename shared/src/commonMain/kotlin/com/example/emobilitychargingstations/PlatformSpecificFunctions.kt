@@ -1,9 +1,9 @@
 package com.example.emobilitychargingstations
 
-import com.example.emobilitychargingstations.models.Stations
+import com.example.emobilitychargingstations.models.StationsJsonModel
 
 expect class PlatformSpecificFunctions() {
-    fun getStationsFromJson(): Stations?
+    fun getStationsFromJson(): StationsJsonModel?
 
     val isDebug: Boolean
 }

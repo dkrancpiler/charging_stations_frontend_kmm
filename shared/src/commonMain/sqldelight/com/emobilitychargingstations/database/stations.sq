@@ -1,12 +1,20 @@
 import com.example.emobilitychargingstations.models.ChargerTypesEnum;
-import com.example.emobilitychargingstations.models.Station;
+import com.example.emobilitychargingstations.models.StationDataModel;
 import com.example.emobilitychargingstations.models.StationFilterProperties;
 import com.example.emobilitychargingstations.models.StationProperties;
+import kotlin.Boolean;
 import kotlin.collections.List;
 
 CREATE TABLE IF NOT EXISTS stationEntity(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    properties TEXT AS StationProperties,
+    numberOfChargers INTEGER,
+    maximumPowerInKw REAL,
+    operator TEXT NOT NULL,
+    listOfChargerTypes TEXT AS List<ChargerTypesEnum>,
+    street TEXT NOT NULL,
+    town TEXT NOT NULL,
+    dataSource TEXT,
+    dcSupport INTEGER AS Boolean DEFAULT 0,
     latitude REAL,
     longitude REAL
 );
@@ -14,7 +22,7 @@ CREATE TABLE IF NOT EXISTS stationEntity(
 CREATE TABLE IF NOT EXISTS userInfoEntity(
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  filterProperties TEXT AS StationFilterProperties,
- favoriteStations TEXT AS List<Station>
+ favoriteStations TEXT AS List<StationDataModel>
 );
 
 insertUserInfo:
@@ -37,4 +45,4 @@ AND (latitude BETWEEN ? AND ?);
 
 insertStation:
 INSERT OR REPLACE
-INTO stationEntity VALUES (?, ?, ?, ?);
+INTO stationEntity VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

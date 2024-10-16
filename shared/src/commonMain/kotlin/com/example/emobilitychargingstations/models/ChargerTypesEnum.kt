@@ -6,5 +6,6 @@ enum class ChargerTypesEnum() {
     AC_TYPE_1,
     DC_CHADEMO,
     TESLA,
+    UNKNOWN,
     ALL
 }

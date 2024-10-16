@@ -4,9 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.emobilitychargingstations.data.extensions.getLatitude
-import com.example.emobilitychargingstations.data.extensions.getLongitude
-import com.example.emobilitychargingstations.models.Station
+import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer
@@ -24,24 +22,24 @@ class StationMapViewModel(): ViewModel() {
 
     fun addMarkersToMap(mapView: MapView, userLocation: GeoPoint,
                         markerCluster: RadiusMarkerClusterer,
-                        stations: List<Station>,
+                        stationJsons: List<StationsUiModel>,
                         clusterIconBitmap: Bitmap,
                         stationsIconDrawable: Drawable?) {
         viewModelScope.launch(Dispatchers.Unconfined) {
             val previousMarkerOverlay = mapView.overlays.firstOrNull { it is FolderOverlay && it.name == stationsMarkersOverlayName }
-            val didStationDataChange = previousMarkerOverlay?.findNumberOfMarkersOnMap() != stations.size
-            if (didStationDataChange && stations.isNotEmpty()) {
+            val didStationDataChange = previousMarkerOverlay?.findNumberOfMarkersOnMap() != stationJsons.size
+            if (didStationDataChange && stationJsons.isNotEmpty()) {
                 val folderOverlay = FolderOverlay()
                 folderOverlay.name = stationsMarkersOverlayName
                 markerCluster.apply {
                     setIcon(clusterIconBitmap)
                     items.removeAll(markerCluster.items.toSet())
                 }
-                stations.forEach {
-                    val stationGeoPoint = GeoPoint(it.geometry.getLatitude(), it.geometry.getLongitude())
+                stationJsons.forEach {
+                    val stationGeoPoint = GeoPoint(it.latitude, it.longitude)
                     val stationMarker = Marker(mapView).apply {
                         position = stationGeoPoint
-                        snippet = it.properties.street ?: it.properties.operator
+                        snippet = it.street
                         icon = stationsIconDrawable
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                     }

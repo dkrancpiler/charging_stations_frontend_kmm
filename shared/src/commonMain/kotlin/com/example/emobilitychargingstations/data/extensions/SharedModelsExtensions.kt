@@ -2,117 +2,70 @@ package com.example.emobilitychargingstations.data.extensions
 
 import com.example.emobilitychargingstations.models.ChargerTypesEnum
 import com.example.emobilitychargingstations.models.ChargingTypeEnum
-import com.example.emobilitychargingstations.models.Station
-import com.example.emobilitychargingstations.models.StationGeoData
-import com.example.emobilitychargingstations.models.UserLocation
-import kotlin.math.abs
+import com.example.emobilitychargingstations.models.StationDataModel
 
-fun List<Station>.getStationsClosestToUserLocation(userLocation: UserLocation?): List<Station> {
-    userLocation?.let {
-        val filteredList = mutableListOf<Station>()
-        this.forEach {
-            if (userLocation.latitude in it.geometry.getLatitude() - 1..it.geometry.getLatitude() + 1
-                && userLocation.longitude in it.geometry.getLongitude() - 1..it.geometry.getLongitude() + 1
-            ) {
-                filteredList.add(it)
-            }
-        }
-        return filteredList
-    }
-    return this
-}
-
-fun List<Station>.getOneStationClosestToUser(userLat: Double, userLng: Double): Station {
-    var closestTotalDifference = 180.00
-    var currentClosestStation = get(0)
-    this.forEach { station ->
-        val latDiff = abs(userLat - station.geometry.getLatitude())
-        val lngDiff = abs(userLng - station.geometry.getLongitude())
-        val totalDiff = latDiff + lngDiff
-        if (totalDiff < closestTotalDifference) {
-            closestTotalDifference = totalDiff
-            currentClosestStation = station
-        }
-    }
-    return currentClosestStation
-}
-
-fun List<Station>.getTwoStationsClosestToUser(userLat: Double, userLng: Double): List<Station> {
-    var closestTotalDifference = 180.00
-    val resultList = mutableListOf<Station>()
-    if (this.isNotEmpty()) {
-        var currentClosestStation = this.getOneStationClosestToUser(userLat, userLng)
-        if (this.size == 1) resultList.add(currentClosestStation) else {
-            var secondClosestStation = currentClosestStation
-            this.forEach { station ->
-                val latDiff = abs(userLat - station.geometry.getLatitude())
-                val lngDiff = abs(userLng - station.geometry.getLongitude())
-                val totalDiff = latDiff + lngDiff
-                if (totalDiff < closestTotalDifference) {
-                    closestTotalDifference = totalDiff
-                    secondClosestStation = currentClosestStation
-                    currentClosestStation = station
+fun List<StationDataModel>.filterByChargerType(chargerType: ChargerTypesEnum?): List<StationDataModel> {
+    return if (chargerType == ChargerTypesEnum.ALL) this else {
+        this.filter { station ->
+            station.listOfChargerTypes?.any { stationChargerType ->
+                if (stationChargerType == ChargerTypesEnum.TESLA) {
+                    station.operator.lowercase().contains("tesla") || stationChargerType == chargerType
                 }
-            }
-            resultList.add(currentClosestStation)
-            resultList.add(secondClosestStation)
+                else stationChargerType == chargerType
+//                        || stationChargerType == ChargerTypesEnum.UNKNOWN
+            } ?: false
         }
     }
-
-    return resultList
-}
-
-fun List<Station>.filterByChargerType(chargerType: ChargerTypesEnum?): List<Station> {
-    val keywords = mutableListOf<String>()
-    when (chargerType) {
-        ChargerTypesEnum.AC_TYPE_2 -> {
-            keywords.add("typ 2")
-            keywords.add("typ2")
-        }
-        ChargerTypesEnum.AC_TYPE_1 -> {
-            keywords.add("Typ1")
-            keywords.add("Typ 1")
-        }
-        ChargerTypesEnum.DC_EU -> {
-            keywords.add("DC Kupplung Combo")
-        }
-        ChargerTypesEnum.DC_CHADEMO -> {
-            keywords.add("chademo")
-        }
-        ChargerTypesEnum.TESLA -> {
-            keywords.add("tesla")
-        }
-        ChargerTypesEnum.ALL -> {
-        }
-        else -> {}
-    }
-    return if (keywords.isEmpty()) this
-    else this.filter { station ->
-        var result = false
-//        if (station.properties.socket_type_list == null) result = true
-//        else {
-            keywords.forEach { keyword ->
-                if (keyword == "tesla" && station.properties.operator?.contains(keyword, true) == true) result = true
-                else station.properties.socket_type_list?.forEach {
-                    if (it.contains(keyword, true)) result = true
-                }
-            }
+//    val keywords = mutableListOf<String>()
+//    when (chargerType) {
+//        ChargerTypesEnum.AC_TYPE_2 -> {
+//            keywords.add("typ 2")
+//            keywords.add("typ2")
 //        }
-        result
-    }
+//        ChargerTypesEnum.AC_TYPE_1 -> {
+//            keywords.add("Typ1")
+//            keywords.add("Typ 1")
+//        }
+//        ChargerTypesEnum.DC_EU -> {
+//            keywords.add("DC Kupplung Combo")
+//        }
+//        ChargerTypesEnum.DC_CHADEMO -> {
+//            keywords.add("chademo")
+//        }
+//        ChargerTypesEnum.TESLA -> {
+//            keywords.add("tesla")
+//        }
+//        ChargerTypesEnum.ALL -> {
+//        }
+//        else -> {}
+//    }
+//    return if (keywords.isEmpty()) this
+//    else this.filter { station ->
+//        var result = false
+////        if (station.properties.socket_type_list == null) result = true
+////        else {
+//            keywords.forEach { keyword ->
+//                if (keyword == "tesla" && station.operator?.contains(keyword, true) == true) result = true
+//                else station.listOfChargerTypes?.forEach {
+//                    if (it.contains(keyword, true)) result = true
+//                }
+//            }
+////        }
+//        result
+//    }
 }
 
-fun List<Station>.filterByChargingType(chargingTypeEnum: ChargingTypeEnum): List<Station> {
+fun List<StationDataModel>.filterByChargingType(chargingTypeEnum: ChargingTypeEnum): List<StationDataModel> {
     return filter { it.checkIsStationOfChargingType(chargingTypeEnum) }
 }
 
-fun Station.randomizeAvailability() {
-    this.properties.availableChargingStations = (0..(this.properties.capacity?.toInt() ?: 1)).random()
+fun StationDataModel.randomizeAvailability() {
+    this.availableChargingStations = (0..(this.numberOfChargers ?: 1)).random()
 }
 
-fun Station.checkIsStationOfChargingType(chargingTypeEnum: ChargingTypeEnum): Boolean {
+fun StationDataModel.checkIsStationOfChargingType(chargingTypeEnum: ChargingTypeEnum): Boolean {
     var result = true
-    this.properties.max_kw?.let {
+    this.maximumPowerInKw?.let {
         result = when (chargingTypeEnum) {
             ChargingTypeEnum.NORMAL -> {
                 it <= 6.99
@@ -130,6 +83,3 @@ fun Station.checkIsStationOfChargingType(chargingTypeEnum: ChargingTypeEnum): Bo
     }
     return result
 }
-
-fun StationGeoData.getLatitude() = coordinates[1]
-fun StationGeoData.getLongitude() = coordinates[0]

@@ -1,7 +1,7 @@
 package com.example.emobilitychargingstations
 
-import com.example.emobilitychargingstations.models.Station
-import com.example.emobilitychargingstations.models.Stations
+import com.example.emobilitychargingstations.models.StationJson
+import com.example.emobilitychargingstations.models.StationsJsonModel
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
@@ -20,33 +20,33 @@ import kotlin.experimental.ExperimentalNativeApi
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 actual class PlatformSpecificFunctions {
 
-    actual fun getStationsFromJson(): Stations? {
+    actual fun getStationsFromJson(): StationsJsonModel? {
         val bundle = NSBundle.bundleForClass(BundleMarker)
         val munichStationsPath = bundle.pathForResource("munichStations", "json")
         val regensburgStationsPath = bundle.pathForResource("regensburgStations", "json")
-        val combinedStations = mutableListOf<Station>()
+        val combinedStationJsons = mutableListOf<StationJson>()
         memScoped {
             munichStationsPath?.let {path ->
                 val errorPtr = alloc<ObjCObjectVar<NSError?>>()
                 val stationsString = NSString.stringWithContentsOfFile(path, NSUTF8StringEncoding, errorPtr.ptr)
-                val munichStations = Json.decodeFromString<Stations>(stationsString!!)
-                munichStations.features?.let {
-                    combinedStations.addAll(it)
+                val munichStationsJsonModel = Json.decodeFromString<StationsJsonModel>(stationsString!!)
+                munichStationsJsonModel.features?.let {
+                    combinedStationJsons.addAll(it)
                 }
             }
             regensburgStationsPath?.let {path ->
                 val errorPtr = alloc<ObjCObjectVar<NSError?>>()
                 val stationsString = NSString.stringWithContentsOfFile(path, NSUTF8StringEncoding, errorPtr.ptr)
-                val regensburgStations = Json.decodeFromString<Stations>(stationsString!!)
-                regensburgStations.features?.let {
-                    combinedStations.addAll(it)
+                val regensburgStationsJsonModel = Json.decodeFromString<StationsJsonModel>(stationsString!!)
+                regensburgStationsJsonModel.features?.let {
+                    combinedStationJsons.addAll(it)
                 }
             }
-            if (combinedStations.isNotEmpty()) {
-                combinedStations.filter { it.properties.street != null }
+            if (combinedStationJsons.isNotEmpty()) {
+                combinedStationJsons.filter { it.properties.street != null }
             }
         }
-        return Stations(type = "", features = combinedStations)
+        return StationsJsonModel(type = "", features = combinedStationJsons)
     }
 
     actual val isDebug = Platform.isDebugBinary

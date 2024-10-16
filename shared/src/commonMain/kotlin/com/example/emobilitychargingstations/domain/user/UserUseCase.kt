@@ -23,14 +23,14 @@ class UserUseCase(private val usersRepository: UsersRepository) {
     suspend fun setChargerType(chargerTypesEnum: ChargerTypesEnum) {
         var userInfo = getUserInfo()
         userInfo = userInfo?.copy(filterProperties = userInfo.filterProperties?.copy(chargerType = chargerTypesEnum))
-            ?: UserInfo(favoriteStations = null, filterProperties = StationFilterProperties(chargerType = chargerTypesEnum))
+            ?: UserInfo(favoriteStationJsons = null, filterProperties = StationFilterProperties(chargerType = chargerTypesEnum))
         setUserInfo(userInfo)
     }
 
     suspend fun setChargingType(chargingTypeEnum: ChargingTypeEnum) {
         var userInfo = getUserInfo()
         userInfo = userInfo?.copy(filterProperties = userInfo.filterProperties?.copy(chargingType = chargingTypeEnum))
-            ?: UserInfo(favoriteStations = null, filterProperties = StationFilterProperties(chargingType = chargingTypeEnum))
+            ?: UserInfo(favoriteStationJsons = null, filterProperties = StationFilterProperties(chargingType = chargingTypeEnum))
         setUserInfo(userInfo)
     }
 }

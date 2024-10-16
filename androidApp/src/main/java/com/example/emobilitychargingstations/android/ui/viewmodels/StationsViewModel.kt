@@ -6,9 +6,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.comsystoreply.emobilitychargingstations.android.BuildConfig
+import com.example.emobilitychargingstations.android.mappers.toStationUIModel
+import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
 import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
-import com.example.emobilitychargingstations.models.Station
 import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
 import com.google.android.gms.location.LocationCallback
@@ -23,8 +24,8 @@ class StationsViewModel(
     private val stationsUseCase: StationsUseCase
 ) : ViewModel() {
 
-    private val _stationsData: MutableLiveData<List<Station>> = MutableLiveData()
-    val stationsData: LiveData<List<Station>> = _stationsData
+    private val _stationsData: MutableLiveData<List<StationsUiModel>> = MutableLiveData()
+    val stationsData: LiveData<List<StationsUiModel>> = _stationsData
 
     private val _userLocation : MutableLiveData<UserLocation> = MutableLiveData()
     val userLocation: LiveData<UserLocation> = _userLocation
@@ -56,11 +57,12 @@ class StationsViewModel(
         _userLocation.value = newUserLocation
     }
     fun startRepeatingStationsRequest() {
-        if (stationsJob == null) stationsJob = stationsUseCase.startRepeatingRequest( userLocation.value).onEach {
-            if (it != null && it != _stationsData.value) {
-                _stationsData.postValue(it)
-            }
-        }.launchIn(viewModelScope)
+        if (stationsJob == null) stationsJob =
+            stationsUseCase.startRepeatingRequest(userLocation.value).onEach { stationList ->
+                if (stationList != null && stationList != _stationsData.value) {
+                    _stationsData.postValue(stationList.map { it.toStationUIModel() })
+                }
+            }.launchIn(viewModelScope)
     }
 
     fun stopRepeatingStationsRequest() {

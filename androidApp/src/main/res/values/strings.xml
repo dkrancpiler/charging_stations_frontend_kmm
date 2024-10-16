@@ -33,6 +33,7 @@
     <string name="android_charger_type_dc_chademo">DC CHAdeMO</string>
     <string name="android_charger_type_tesla">Tesla</string>
     <string name="android_charger_type_all">All charger types</string>
+    <string name="android_charger_type_unknown">Unknown charger types</string>
     <string name="android_charging_type_normal">Normal charging</string>
     <string name="android_charging_type_fast">Fast charging</string>
     <string name="android_charging_type_rapid">Rapid charging</string>

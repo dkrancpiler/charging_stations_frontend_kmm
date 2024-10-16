@@ -2,8 +2,8 @@ package com.example.emobilitychargingstations.data.stations.api
 
 import arrow.core.Either
 import arrow.core.raise.either
-import com.example.emobilitychargingstations.models.StationsResponseModel
 import com.example.emobilitychargingstations.models.StationsRequestModel
+import com.example.emobilitychargingstations.models.StationsResponseModel
 import com.example.emobilitychargingstations.models.UserLocation
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

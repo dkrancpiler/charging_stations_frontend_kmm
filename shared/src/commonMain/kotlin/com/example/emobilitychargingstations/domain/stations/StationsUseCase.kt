@@ -1,17 +1,15 @@
 package com.example.emobilitychargingstations.domain.stations
 
+import com.example.emobilitychargingstations.PlatformSpecificFunctions
 import com.example.emobilitychargingstations.SHOULD_TRY_API_REQUEST
 import com.example.emobilitychargingstations.STATION_REQUEST_REPEAT_TIME_MS
-import com.example.emobilitychargingstations.data.extensions.getStationsClosestToUserLocation
-import com.example.emobilitychargingstations.PlatformSpecificFunctions
 import com.example.emobilitychargingstations.data.extensions.filterByChargerType
 import com.example.emobilitychargingstations.data.extensions.filterByChargingType
 import com.example.emobilitychargingstations.data.extensions.randomizeAvailability
 import com.example.emobilitychargingstations.data.stations.StationsRepository
-import com.example.emobilitychargingstations.data.stations.toStationList
+import com.example.emobilitychargingstations.data.stations.toStationDataModel
 import com.example.emobilitychargingstations.domain.user.UserUseCase
-import com.example.emobilitychargingstations.models.Station
-import com.example.emobilitychargingstations.models.Stations
+import com.example.emobilitychargingstations.models.StationDataModel
 import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
 import kotlinx.coroutines.Dispatchers
@@ -26,26 +24,28 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
 
     private var userLocation: UserLocation? = null
 
-    private suspend fun insertStations(stations: Stations) {
+    private suspend fun insertStations(stationList: List<StationDataModel>) {
         stationsRepository.insertStations(
-            stations
+            stationList
         )
     }
 
-    private suspend fun getStationsLocal(userLocation: UserLocation): Stations? {
+    private suspend fun getStationsLocal(userLocation: UserLocation): List<StationDataModel>? {
         val checkIfStationsExist = stationsRepository.checkIfStationsExistLocally()
-        var localStations = stationsRepository.getStationsLocallyByLatLng(userLocation)
+        var localStations: List<StationDataModel>? =
+            stationsRepository.getStationsLocallyByLatLng(userLocation)
         if (checkIfStationsExist != true) {
             val stationsFromJson = PlatformSpecificFunctions().getStationsFromJson()
             stationsFromJson?.let {
-                localStations = it.features!!
-                insertStations(it)
+                it.features?.let { stationsJsonList ->
+                    localStations = stationsJsonList.map { stationJson ->
+                        stationJson.toStationDataModel()
+                    }
+                    insertStations(localStations!!)
+                }
             }
         }
-        return Stations(
-            "",
-            localStations
-        )
+        return localStations
     }
 
     fun setTemporaryLocation(newLocation: UserLocation?) {
@@ -56,7 +56,7 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
         launch(Dispatchers.IO) {
             val localStations = getStationsLocal(initialLocation!!)
             var userInfo = userUseCase.getUserInfo()
-            val localStationsWithUserFilters = localStations?.copy()?.features?.applyUserFiltersToStations(userInfo)
+            val localStationsWithUserFilters = localStations?.applyUserFiltersToStations(userInfo)
             userLocation = initialLocation
             send(localStationsWithUserFilters)
             launch {
@@ -64,7 +64,7 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
                     if ((userInfo?.filterProperties?.chargingType != userInfoChange?.filterProperties?.chargingType
                                 || userInfo?.filterProperties?.chargerType != userInfoChange?.filterProperties?.chargerType)) {
                         userInfo = userInfoChange
-                        localStations?.features?.let { localStations ->
+                        localStations?.let { localStations ->
                             val resultingList = localStations.applyUserFiltersToStations(userInfo)
                             send(resultingList)
                         }
@@ -72,15 +72,17 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
                 }.collect()
             }
             while (true) {
-                val remoteStations = mutableListOf<Station>()
+                val remoteStationJsons = mutableListOf<StationDataModel>()
                 if (PlatformSpecificFunctions().isDebug && SHOULD_TRY_API_REQUEST) {
                     stationsRepository.getStationsRemote(userLocation).onRight {
-                        remoteStations.addAll(it.toStationList())
+                        remoteStationJsons.addAll(it.map { stationsResponseModel ->
+                            stationsResponseModel.toStationDataModel() }
+                        )
                     }.onLeft {
                         print(it.toString())
                     }
                 }
-                val resultingList = combineRemoteAndLocalStations(localStations?.features, remoteStations)
+                val resultingList = combineRemoteAndLocalStations(localStations ?: listOf(), remoteStationJsons)
 //                    .getStationsClosestToUserLocation(userLocation)
                     .applyUserFiltersToStations(userInfo)
                 send(resultingList)
@@ -89,21 +91,23 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
         }
     }
 
-    private fun combineRemoteAndLocalStations(localStations: List<Station>?, remoteStations: List<Station>?): List<Station> {
-        val stationList = mutableListOf<Station>()
-        localStations?.let {
+    private fun combineRemoteAndLocalStations(localStationJsons: List<StationDataModel>, remoteStationJsons: List<StationDataModel>): List<StationDataModel> {
+//        val stationJsonList = mutableListOf<StationJson>()
+//        remoteStationJsons?.let {
+//            stationJsonList.addAll(it)
+//        }
+        val resultingList = mutableListOf<StationDataModel>()
+        resultingList.addAll(remoteStationJsons)
+        localStationJsons.let {
             it.forEach { station ->
                 station.randomizeAvailability()
             }
-            stationList.addAll(it)
+            resultingList.addAll(it)
         }
-        remoteStations?.let {
-            stationList.addAll(it)
-        }
-        return stationList.toList()
+        return resultingList
     }
 
-    private fun List<Station>.applyUserFiltersToStations(userInfo: UserInfo?): List<Station> {
+    private fun List<StationDataModel>.applyUserFiltersToStations(userInfo: UserInfo?): List<StationDataModel> {
         var resultingList = this
         userInfo?.filterProperties?.chargingType?.let {
             resultingList = resultingList.filterByChargingType(it)

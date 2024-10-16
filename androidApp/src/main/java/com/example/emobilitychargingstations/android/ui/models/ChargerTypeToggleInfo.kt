@@ -1,4 +1,4 @@
-package com.example.emobilitychargingstations.android.models
+package com.example.emobilitychargingstations.android.ui.models
 
 import com.example.emobilitychargingstations.models.ChargerTypesEnum
 

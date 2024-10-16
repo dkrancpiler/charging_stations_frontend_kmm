@@ -12,23 +12,21 @@ import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
 import com.comsystoreply.emobilitychargingstations.android.R
 import com.example.emobilitychargingstations.android.ui.auto.BaseScreen
+import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
 import com.example.emobilitychargingstations.android.ui.utilities.AUTO_POI_MAP_SCREEN_MARKER
 import com.example.emobilitychargingstations.android.ui.utilities.buildRowWithText
 import com.example.emobilitychargingstations.android.ui.utilities.getFavoritesAction
 import com.example.emobilitychargingstations.android.ui.utilities.getString
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargingType
 import com.example.emobilitychargingstations.data.extensions.getChargingTypeFromMaxKW
-import com.example.emobilitychargingstations.data.extensions.getLatitude
-import com.example.emobilitychargingstations.data.extensions.getLongitude
-import com.example.emobilitychargingstations.models.Station
 import com.example.emobilitychargingstations.models.UserInfo
 import kotlinx.coroutines.launch
 
-class StationDetailsScreen(carContext: CarContext, val station: Station, private val showFavoritesAction: Boolean = false) : BaseScreen(carContext) {
+class StationDetailsScreen(carContext: CarContext, private val stationsUiModel: StationsUiModel, private val showFavoritesAction: Boolean = false) : BaseScreen(carContext) {
 
     override fun onGetTemplate(): Template {
         val userInfo = userUseCase.getUserInfo()
-        val actionTitle = if (station.isNavigatingTo) getString(R.string.auto_station_details_stop_navigation) else getString(R.string.auto_station_details_start_navigation)
+        val actionTitle = if (stationsUiModel.isNavigatingTo) getString(R.string.auto_station_details_stop_navigation) else getString(R.string.auto_station_details_start_navigation)
         val stationsPane = Pane.Builder().apply {
             addAction(
                 Action.Builder().apply{
@@ -37,17 +35,17 @@ class StationDetailsScreen(carContext: CarContext, val station: Station, private
                     setOnClickListener(this@StationDetailsScreen::changeNavigation).build()
                 }.build()
             )
-            if (showFavoritesAction) addAction(getFavoritesAction(station, userInfo, ::onFavoriteChanged))
+            if (showFavoritesAction) addAction(getFavoritesAction(stationsUiModel, userInfo, ::onFavoriteChanged))
             addRow(
                 buildRowWithText(
                     title = SpannableString(getString(R.string.auto_station_details_station_capacity)),
-                    text = station.properties.availableChargingStations.toString() + "/" + station.properties.capacity?.toInt().toString()
+                    text = stationsUiModel.availableChargingStations.toString() + "/" + stationsUiModel.numberOfChargers?.toString()
                 )
             )
             addRow(
                 buildRowWithText(
                     title = SpannableString(getString(R.string.auto_station_details_operator)),
-                    text = station.properties.operator ?: "-"
+                    text = stationsUiModel.operator ?: "-"
                 )
             )
             addRow(buildRowWithText(SpannableString(getString(R.string.auto_station_details_station_charger_type_list)), getSocketTypeString()))
@@ -59,17 +57,17 @@ class StationDetailsScreen(carContext: CarContext, val station: Station, private
     }
 
     private fun getPaneTitle(): String {
-        val chargingType = station.properties.max_kw.getChargingTypeFromMaxKW()
+        val chargingType = stationsUiModel.maximumPowerInKw.getChargingTypeFromMaxKW()
         val chargingTypeString = getString(chargingType.getStringIdFromChargingType())
-        return "${station.properties.street} - $chargingTypeString"
+        return "${stationsUiModel.street} - $chargingTypeString"
     }
 
     private fun getSocketTypeString() : String {
-        val socketTypeString = if (station.properties.socket_type_list == null) getString(R.string.auto_station_details_unknown_charger) else {
+        val socketTypeString = if (stationsUiModel.listOfChargerTypes == null) getString(R.string.auto_station_details_unknown_charger) else {
             var resultingString = ""
-            station.properties.socket_type_list!!.groupingBy { it }.eachCount().filterValues { it >= 1 }.keys.forEach {
-                resultingString = if (resultingString.isEmpty()) it
-                else "$resultingString, $it"
+            stationsUiModel.listOfChargerTypes!!.groupingBy { it }.eachCount().filterValues { it >= 1 }.keys.forEach {
+                resultingString = if (resultingString.isEmpty()) it.name
+                else "$resultingString, ${it.name}"
             }
             resultingString
         }
@@ -77,16 +75,16 @@ class StationDetailsScreen(carContext: CarContext, val station: Station, private
     }
 
     private fun changeNavigation() {
-        if (station.isNavigatingTo)  {
-            station.isNavigatingTo = false
-            setResult(station)
+        if (stationsUiModel.isNavigatingTo)  {
+            stationsUiModel.isNavigatingTo = false
+            setResult(stationsUiModel)
         }
         else {
-            station.isNavigatingTo = true
-            setResult(station)
-            val latitude = station.geometry.getLatitude()
-            val longitude = station.geometry.getLongitude()
-            val name = getString(R.string.auto_station_details_navigating_to, station.properties.street ?: "")
+            stationsUiModel.isNavigatingTo = true
+            setResult(stationsUiModel)
+            val latitude = stationsUiModel.latitude
+            val longitude = stationsUiModel.longitude
+            val name = getString(R.string.auto_station_details_navigating_to, stationsUiModel.street)
             val intent = Intent(CarContext.ACTION_NAVIGATE, Uri.parse("geo:0,0?q=${latitude},${longitude}(${name})"))
             carContext.startCarApp(intent)
         }
