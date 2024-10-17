@@ -45,13 +45,10 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
         }
         return localStations
     }
+
     fun startRepeatingRequest(limit: Int? = null) = channelFlow {
         launch(Dispatchers.IO) {
-//            var userInfo = userUseCase.getUserInfo()?.copy(userLocation = initialLocation)
-//            val localStations = getStationsLocal(userInfo, limit)
-//            val localStationsWithUserFilters = localStations?.applyUserFiltersToStations(userInfo)
-//            send(localStationsWithUserFilters)
-//            var stations: List<StationDataModel>? = null
+            var stations: List<StationDataModel>? = null
             launch {
                 var userInfo: UserInfo? = null
                 userUseCase.getUserInfoAsFlow().onEach { userInfoChange ->
@@ -59,11 +56,12 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
                                 || userInfo?.filterProperties?.chargerType != userInfoChange?.filterProperties?.chargerType)
                                 || userInfo?.userLocation != userInfoChange?.userLocation) {
                         userInfo = userInfoChange
-                        val stations = getStationsLocal(userInfo, limit)
-                        stations?.let {
-                            it.onEach { station ->
-                                station.randomizeAvailability()
-                            }
+                        val newStations = getStationsLocal(userInfo, limit)
+                        if (stations != newStations) newStations?.let {
+                            stations = it
+//                            it.onEach { station ->
+//                                station.randomizeAvailability()
+//                            }
                             send(it)
                         }
                     }
@@ -82,7 +80,6 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
 //                    }
 //                }
 //                val resultingList = combineRemoteAndLocalStations(stations ?: listOf(), remoteStationJsons)
-////                    .getStationsClosestToUserLocation(userLocation)
 //                    .applyUserFiltersToStations(userInfo)
 //                send(resultingList)
 //                delay(STATION_REQUEST_REPEAT_TIME_MS)

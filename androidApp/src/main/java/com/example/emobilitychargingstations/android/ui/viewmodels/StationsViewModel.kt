@@ -1,8 +1,9 @@
 package com.example.emobilitychargingstations.android.ui.viewmodels
 
 import android.location.Location
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.comsystoreply.emobilitychargingstations.android.BuildConfig
@@ -31,11 +32,11 @@ class StationsViewModel(
         startRepeatingStationsRequest()
     }
 
-    private val _stationsData: MutableLiveData<List<StationsUiModel>> = MutableLiveData()
-    val stationsData: LiveData<List<StationsUiModel>> = _stationsData
+    private val _stationsData: MutableState<List<StationsUiModel>?> = mutableStateOf(null)
+    val stationsData: State<List<StationsUiModel>?> = _stationsData
 
-    private val _userLocation : MutableLiveData<UserLocation> = MutableLiveData()
-    val userLocation: LiveData<UserLocation> = _userLocation
+    private val _userLocation : MutableState<UserLocation?> = mutableStateOf(null)
+    val userLocation: State<UserLocation?> = _userLocation
 
     private var stationsJob: Job? = null
 
@@ -61,14 +62,14 @@ class StationsViewModel(
     private fun setUserLocation(newUserLocation: UserLocation) {
         viewModelScope.launch(Dispatchers.IO) {
             userUseCase.setUserLocation(newUserLocation)
-            _userLocation.postValue(newUserLocation)
+            _userLocation.value = newUserLocation
         }
     }
     fun startRepeatingStationsRequest() {
         if (stationsJob == null) stationsJob =
                 stationsUseCase.startRepeatingRequest().onEach { stationList ->
-                    if (stationList != null && stationList != _stationsData.value) {
-                        _stationsData.postValue(stationList.map { it.toStationUIModel() })
+                    if (stationList != _stationsData.value) {
+                        _stationsData.value = stationList.map { it.toStationUIModel() }
 //                        _stationsData.value = stationList.map { it.toStationUIModel() }
                     }
                 }.launchIn(CoroutineScope(Dispatchers.IO))

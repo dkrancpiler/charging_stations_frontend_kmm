@@ -6,7 +6,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,12 +35,12 @@ fun MapViewComposable(proceedToSocketSelection: () -> Unit,
     val clusterIcon = BonusPackHelper.getBitmapFromVectorDrawable(LocalContext.current, org.osmdroid.bonuspack.R.drawable.marker_cluster)
     val stationIcon = AppCompatResources.getDrawable(LocalContext.current,R.drawable.electric_car_icon)
 
-    val testStations = stationsViewModel.stationsData.observeAsState()
-    val userLocation = stationsViewModel.userLocation.observeAsState()
+    val testStations = stationsViewModel.stationsData.value
+    val userLocation = stationsViewModel.userLocation.value
     val mapView = mapViewWithLifecycle()
     ConstraintLayout(modifier = Modifier.fillMaxSize()) {
         val (map, button, progressBar) = createRefs()
-        if (testStations.value != null && userLocation.value != null) {
+        if (testStations != null && userLocation != null) {
             AndroidView({ mapView },
                 Modifier
                     .fillMaxSize()
@@ -59,10 +58,10 @@ fun MapViewComposable(proceedToSocketSelection: () -> Unit,
             end.linkTo(parent.end)
         })
     }
-    if (testStations.value != null && userLocation.value != null) {
-        val userLocationAsGeoPoint = GeoPoint(userLocation.value!!.latitude, userLocation.value!!.longitude)
+    if (testStations != null && userLocation != null) {
+        val userLocationAsGeoPoint = GeoPoint(userLocation.latitude, userLocation.longitude)
         val newMarkerCluster = RadiusMarkerClusterer(LocalContext.current)
-        stationMapViewModel.addMarkersToMap(mapView, userLocationAsGeoPoint, newMarkerCluster, testStations.value!!, clusterIcon, stationIcon)
+        stationMapViewModel.addMarkersToMap(mapView, userLocationAsGeoPoint, newMarkerCluster, testStations, clusterIcon, stationIcon)
     }
 }
 
