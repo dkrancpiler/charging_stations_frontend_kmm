@@ -22,17 +22,16 @@ CREATE TABLE IF NOT EXISTS stationEntity(
 CREATE TABLE IF NOT EXISTS userInfoEntity(
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  filterProperties TEXT AS StationFilterProperties,
- favoriteStations TEXT AS List<StationDataModel>
+ favoriteStations TEXT AS List<StationDataModel>,
+ lastKnownLatitude REAL,
+ lastKnownLongitude REAL
 );
 
 insertUserInfo:
-INSERT OR REPLACE INTO userInfoEntity(id, filterProperties, favoriteStations) VALUES (1, ?, ?);
+INSERT OR REPLACE INTO userInfoEntity(id, filterProperties, favoriteStations, lastKnownLatitude, lastKnownLongitude) VALUES (1, ?, ?, ?, ?);
 
 getUserInfo:
 SELECT * FROM userInfoEntity;
-
-getAllStations:
-SELECT * FROM stationEntity;
 
 checkIfStationsExist:
 SELECT * FROM stationEntity LIMIT 1;
@@ -40,8 +39,18 @@ SELECT * FROM stationEntity LIMIT 1;
 getAllStationsByLatLng:
 SELECT *
 FROM stationEntity
-WHERE (longitude BETWEEN ? AND ?)
-AND (latitude BETWEEN ? AND ?);
+WHERE (longitude BETWEEN :longitudeMin AND :longitudeMax)
+AND (latitude BETWEEN :latitudeMin AND :latitudeMax)
+AND (listOfChargerTypes LIKE :chargerType)
+AND (maximumPowerInKw BETWEEN :minimumPower AND :maximumPower);
+
+getLimitedClosestStationsByLatLngAndUserFilters:
+SELECT *
+FROM stationEntity
+WHERE (listOfChargerTypes LIKE :chargerType)
+AND (maximumPowerInKw BETWEEN :minimumPower AND :maximumPower)
+ORDER BY (ABS(longitude - :userLongitude) + ABS(latitude - :userLatitude)) ASC
+LIMIT :limit;
 
 insertStation:
 INSERT OR REPLACE

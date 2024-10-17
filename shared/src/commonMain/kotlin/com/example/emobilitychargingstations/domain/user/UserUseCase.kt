@@ -5,6 +5,7 @@ import com.example.emobilitychargingstations.models.ChargerTypesEnum
 import com.example.emobilitychargingstations.models.ChargingTypeEnum
 import com.example.emobilitychargingstations.models.StationFilterProperties
 import com.example.emobilitychargingstations.models.UserInfo
+import com.example.emobilitychargingstations.models.UserLocation
 import kotlinx.coroutines.flow.Flow
 
 class UserUseCase(private val usersRepository: UsersRepository) {
@@ -21,16 +22,25 @@ class UserUseCase(private val usersRepository: UsersRepository) {
     }
 
     suspend fun setChargerType(chargerTypesEnum: ChargerTypesEnum) {
-        var userInfo = getUserInfo()
-        userInfo = userInfo?.copy(filterProperties = userInfo.filterProperties?.copy(chargerType = chargerTypesEnum))
-            ?: UserInfo(favoriteStationJsons = null, filterProperties = StationFilterProperties(chargerType = chargerTypesEnum))
-        setUserInfo(userInfo)
+        val userInfo = getUserInfo()
+        val newUserInfo = userInfo?.copy(filterProperties = userInfo.filterProperties?.copy(chargerType = chargerTypesEnum)?: StationFilterProperties(chargerType = chargerTypesEnum))
+        newUserInfo?.let {
+            setUserInfo(it)
+        }
     }
 
     suspend fun setChargingType(chargingTypeEnum: ChargingTypeEnum) {
-        var userInfo = getUserInfo()
-        userInfo = userInfo?.copy(filterProperties = userInfo.filterProperties?.copy(chargingType = chargingTypeEnum))
-            ?: UserInfo(favoriteStationJsons = null, filterProperties = StationFilterProperties(chargingType = chargingTypeEnum))
-        setUserInfo(userInfo)
+        val userInfo = getUserInfo()
+        val newUserInfo = userInfo?.copy(filterProperties = userInfo.filterProperties?.copy(chargingType = chargingTypeEnum) ?: StationFilterProperties(chargingType = chargingTypeEnum))
+        newUserInfo?.let {
+            setUserInfo(it)
+        }
+    }
+
+    suspend fun setUserLocation(userLocation: UserLocation) {
+        val userInfo = getUserInfo()
+        val newUserInfo = userInfo?.copy(userLocation = userLocation)
+            ?: UserInfo(favoriteStationJsons = null, filterProperties = null, userLocation = userLocation)
+        setUserInfo(newUserInfo)
     }
 }

@@ -22,18 +22,16 @@ import kotlinx.coroutines.launch
 
 class StationsUseCase(private val stationsRepository: StationsRepository, private val userUseCase: UserUseCase) {
 
-    private var userLocation: UserLocation? = null
-
     private suspend fun insertStations(stationList: List<StationDataModel>) {
         stationsRepository.insertStations(
             stationList
         )
     }
 
-    private suspend fun getStationsLocal(userLocation: UserLocation): List<StationDataModel>? {
+    private suspend fun getStationsLocal(userInfo: UserInfo?, limit: Int? = null): List<StationDataModel>? {
         val checkIfStationsExist = stationsRepository.checkIfStationsExistLocally()
-        var localStations: List<StationDataModel>? =
-            stationsRepository.getStationsLocallyByLatLng(userLocation)
+        var localStations: List<StationDataModel>? = if (limit != null) stationsRepository.getLimitedStationsLocallyByUserInfo(userInfo!!, limit)
+            else stationsRepository.getStationsLocallyByLatLng(userInfo!!)
         if (checkIfStationsExist != true) {
             val stationsFromJson = PlatformSpecificFunctions().getStationsFromJson()
             stationsFromJson?.let {
@@ -47,47 +45,48 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
         }
         return localStations
     }
-
-    fun setTemporaryLocation(newLocation: UserLocation?) {
-        userLocation = newLocation
-    }
-
-    fun startRepeatingRequest(initialLocation: UserLocation?) = channelFlow {
+    fun startRepeatingRequest(limit: Int? = null) = channelFlow {
         launch(Dispatchers.IO) {
-            val localStations = getStationsLocal(initialLocation!!)
-            var userInfo = userUseCase.getUserInfo()
-            val localStationsWithUserFilters = localStations?.applyUserFiltersToStations(userInfo)
-            userLocation = initialLocation
-            send(localStationsWithUserFilters)
+//            var userInfo = userUseCase.getUserInfo()?.copy(userLocation = initialLocation)
+//            val localStations = getStationsLocal(userInfo, limit)
+//            val localStationsWithUserFilters = localStations?.applyUserFiltersToStations(userInfo)
+//            send(localStationsWithUserFilters)
+//            var stations: List<StationDataModel>? = null
             launch {
+                var userInfo: UserInfo? = null
                 userUseCase.getUserInfoAsFlow().onEach { userInfoChange ->
                     if ((userInfo?.filterProperties?.chargingType != userInfoChange?.filterProperties?.chargingType
-                                || userInfo?.filterProperties?.chargerType != userInfoChange?.filterProperties?.chargerType)) {
+                                || userInfo?.filterProperties?.chargerType != userInfoChange?.filterProperties?.chargerType)
+                                || userInfo?.userLocation != userInfoChange?.userLocation) {
                         userInfo = userInfoChange
-                        localStations?.let { localStations ->
-                            val resultingList = localStations.applyUserFiltersToStations(userInfo)
-                            send(resultingList)
+                        val stations = getStationsLocal(userInfo, limit)
+                        stations?.let {
+                            it.onEach { station ->
+                                station.randomizeAvailability()
+                            }
+                            send(it)
                         }
                     }
                 }.collect()
             }
-            while (true) {
-                val remoteStationJsons = mutableListOf<StationDataModel>()
-                if (PlatformSpecificFunctions().isDebug && SHOULD_TRY_API_REQUEST) {
-                    stationsRepository.getStationsRemote(userLocation).onRight {
-                        remoteStationJsons.addAll(it.map { stationsResponseModel ->
-                            stationsResponseModel.toStationDataModel() }
-                        )
-                    }.onLeft {
-                        print(it.toString())
-                    }
-                }
-                val resultingList = combineRemoteAndLocalStations(localStations ?: listOf(), remoteStationJsons)
-//                    .getStationsClosestToUserLocation(userLocation)
-                    .applyUserFiltersToStations(userInfo)
-                send(resultingList)
-                delay(STATION_REQUEST_REPEAT_TIME_MS)
-            }
+            //TODO: remote stations part needs better integration
+//            while (true) {
+//                val remoteStationJsons = mutableListOf<StationDataModel>()
+//                if (PlatformSpecificFunctions().isDebug && SHOULD_TRY_API_REQUEST) {
+//                    stationsRepository.getStationsRemote(userInfo?.userLocation).onRight {
+//                        remoteStationJsons.addAll(it.map { stationsResponseModel ->
+//                            stationsResponseModel.toStationDataModel() }
+//                        )
+//                    }.onLeft {
+//                        print(it.toString())
+//                    }
+//                }
+//                val resultingList = combineRemoteAndLocalStations(stations ?: listOf(), remoteStationJsons)
+////                    .getStationsClosestToUserLocation(userLocation)
+//                    .applyUserFiltersToStations(userInfo)
+//                send(resultingList)
+//                delay(STATION_REQUEST_REPEAT_TIME_MS)
+//            }
         }
     }
 

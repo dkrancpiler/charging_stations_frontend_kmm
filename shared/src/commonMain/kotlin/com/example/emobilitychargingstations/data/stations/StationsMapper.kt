@@ -12,13 +12,13 @@ fun StationEntity.toStationDataModel(): StationDataModel {
     return StationDataModel(
         id = this.id,
         numberOfChargers = this.numberOfChargers?.toInt(),
-        maximumPowerInKw = null,
+        maximumPowerInKw = this.maximumPowerInKw,
         operator = this.operator_ ?: "",
         listOfChargerTypes = this.listOfChargerTypes,
         street = this.street ?: "",
         town = this.town ?: "",
         dataSource = this.dataSource,
-        dcSupport = null,
+        dcSupport = this.dcSupport,
         latitude = this.latitude,
         longitude = this.longitude,
     )
@@ -29,7 +29,11 @@ fun StationJson.toStationDataModel(): StationDataModel = StationDataModel(
     numberOfChargers = this.properties.capacity?.toInt(),
     maximumPowerInKw = this.properties.max_kw,
     operator = this.properties.operator ?: "",
-    listOfChargerTypes = this.properties.socket_type_list?.map { stringToChargerType(it) },
+    listOfChargerTypes = this.properties.socket_type_list?.map
+    {
+        stringToChargerType(it)
+    } ?: if (this.properties.operator?.lowercase()?.contains("tesla") == true) listOf(ChargerTypesEnum.TESLA)
+    else null,
     street = this.properties.street ?: "",
     town = this.properties.town ?: "",
     dataSource = this.properties.data_source,
@@ -65,19 +69,6 @@ private fun stringToChargerType(value: String): ChargerTypesEnum {
         }
     }
 }
-
-
-//fun StationEntity.toStationDataModel(): StationDataModel = StationDataModel(
-//    id = this.id,
-//    numberOfChargers = this.numberOfChargers,
-//    maximumPowerInKw = this.maximumPowerInKw,
-//    operator = this.operator ?: "",
-//    listOfChargerTypes = this.listOfChargerTypes,
-//    street = this.street ?: "",
-//    town = this.town ?: "",
-//    latitude = this.latitude,
-//    longitude = this.longitude,
-//)
 
 fun List<StationsResponseModel>.toStationList(): List<StationJson> {
     val resultingList = mutableListOf<StationJson>()

@@ -28,40 +28,45 @@ import com.example.emobilitychargingstations.android.ui.utilities.getPlaceWithMa
 import com.example.emobilitychargingstations.android.ui.utilities.getString
 import com.example.emobilitychargingstations.android.ui.utilities.getTitleAsSpannableStringAndAddDistance
 import com.example.emobilitychargingstations.android.ui.utilities.getTransparentCarColor
-import com.example.emobilitychargingstations.android.ui.utilities.getTwoStationsClosestToUser
 import com.example.emobilitychargingstations.models.UserLocation
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class ChargingMapScreen(carContext: CarContext) : BaseScreen(carContext), OnScreenResultListener {
 
+    init {
+        startStationsRepeatingRequest()
+    }
+
     private var initialUserLocation: UserLocation? = null
-    private var closestStationJsons: List<StationsUiModel> = listOf()
-    private var initialStationJsonList: List<StationsUiModel>? = null
+    private var twoClosestStations: List<StationsUiModel> = listOf()
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             locationResult.locations.firstOrNull()?.let {
                 if (checkIsLocationMockDebug(it)) {
-                    if (closestStationJsons.firstOrNull()?.isNavigatingTo == true && getDistanceValue(it, closestStationJsons.first()) < NAVIGATION_DISTANCE_VALUE_FOR_COMPLETION_IN_METERS) {
-                        pushDestinationReachedScreen(closestStationJsons.first())
+                    if (twoClosestStations.firstOrNull()?.isNavigatingTo == true && getDistanceValue(it, twoClosestStations.first()) < NAVIGATION_DISTANCE_VALUE_FOR_COMPLETION_IN_METERS) {
+                        pushDestinationReachedScreen(twoClosestStations.first())
                     }
                     else {
                         val userLocation = UserLocation(it.latitude, it.longitude)
-                        if (initialUserLocation == null) startStationsRepeatingRequest(userLocation)
-                        initialUserLocation = userLocation
-                        stationsUseCase.setTemporaryLocation(initialUserLocation)
-                        filterStations()
-                        invalidate()
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            userUseCase.setUserLocation(userLocation)
+                            initialUserLocation = userLocation
+                            invalidate()
+                        }
                     }
                 }
             }
         }
     }
+    private val locationRequestStarter = LocationRequestStarter(carContext, locationCallback)
 
     init {
-        LocationRequestStarter(carContext, locationCallback)
+        locationRequestStarter.startRequestingLocation()
         marker = AUTO_POI_MAP_SCREEN_MARKER
     }
 
@@ -74,32 +79,31 @@ class ChargingMapScreen(carContext: CarContext) : BaseScreen(carContext), OnScre
         result?.let {stationResult ->
             val stationJson = stationResult as StationsUiModel
             if (stationJson.isNavigatingTo) {
-                closestStationJsons = listOf(stationJson)
+                twoClosestStations = listOf(stationJson)
             }
             else {
-                closestStationJsons.forEach { it.isNavigatingTo = false }
-                filterStations()
+                twoClosestStations.forEach { it.isNavigatingTo = false }
             }
             invalidate()
         }
     }
 
-    private fun startStationsRepeatingRequest (userLocation: UserLocation) {
+    private fun startStationsRepeatingRequest () {
         stationsUseCase.startRepeatingRequest(
-            userLocation
+            2
         ).onEach { stationList ->
-            if (closestStationJsons.firstOrNull()?.isNavigatingTo != true && stationList != initialStationJsonList) {
-                initialStationJsonList = stationList?.map { it.toStationUIModel() }
-                filterStations()
-                invalidate()
+            if (twoClosestStations.firstOrNull()?.isNavigatingTo != true && stationList != twoClosestStations) {
+                stationList.let { stations ->
+                    twoClosestStations = stations.map { it.toStationUIModel() }
+                    invalidate()
+                }
             }
         }.launchIn(lifecycleScope)
     }
 
     private fun pushDestinationReachedScreen(stationJson: StationsUiModel) {
-        closestStationJsons.firstOrNull()?.isNavigatingTo = false
+        twoClosestStations.firstOrNull()?.isNavigatingTo = false
         screenManager.push(NavigationCompleteScreen(carContext, stationJson))
-        filterStations()
         invalidate()
     }
 
@@ -115,13 +119,6 @@ class ChargingMapScreen(carContext: CarContext) : BaseScreen(carContext), OnScre
         return distanceResult[0]
     }
 
-    private fun filterStations() {
-        if (closestStationJsons.firstOrNull()?.isNavigatingTo != true) {
-            closestStationJsons = if (initialStationJsonList.isNullOrEmpty() || initialUserLocation == null) listOf()
-            else initialStationJsonList!!.getTwoStationsClosestToUser(initialUserLocation!!.latitude, initialUserLocation!!.longitude)
-        }
-    }
-
     private fun checkIsLocationMockDebug(location: Location) : Boolean {
         return if (BuildConfig.DEBUG) location.isMock else true
 //        return true
@@ -132,7 +129,7 @@ class ChargingMapScreen(carContext: CarContext) : BaseScreen(carContext), OnScre
         val mapTemplateBuilder = PlaceListMapTemplate.Builder().setActionStrip(actionStrip)
         val carIcon = getDrawableAsBitmap(R.drawable.electric_car_icon)
         mapTemplateBuilder.setTitle(getString(R.string.auto_map_title))
-        if (initialUserLocation == null || initialStationJsonList == null)
+        if (initialUserLocation == null || twoClosestStations.isEmpty())
             return mapTemplateBuilder.setLoading(true)
 
         mapTemplateBuilder.setAnchor(
@@ -142,14 +139,14 @@ class ChargingMapScreen(carContext: CarContext) : BaseScreen(carContext), OnScre
                 CarColor.PRIMARY
             )
         )
-        if (closestStationJsons.isEmpty())
+        if (twoClosestStations.isEmpty())
             return mapTemplateBuilder.setItemList(
                 ItemList.Builder().setNoItemsMessage(getString(R.string.auto_map_empty_list_message))
                     .build()
             )
 
-        val firstStationJson: StationsUiModel = closestStationJsons.first()
-        val secondStation = if (closestStationJsons.size > 1) closestStationJsons[1] else null
+        val firstStationJson: StationsUiModel = twoClosestStations.first()
+        val secondStation = if (twoClosestStations.size > 1) twoClosestStations[1] else null
         val firstItemIcon = if (firstStationJson.isNavigatingTo) {
             mapTemplateBuilder.setTitle(getString(R.string.auto_map_navigation_title))
             getDrawableAsBitmap(R.drawable.navigating_to_icon)

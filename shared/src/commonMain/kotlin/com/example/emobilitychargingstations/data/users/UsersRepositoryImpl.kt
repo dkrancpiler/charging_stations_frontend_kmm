@@ -21,6 +21,6 @@ class UsersRepositoryImpl(stationsDatabase: StationsDatabase): UsersRepository {
     }
 
     override suspend fun setUserInfo(userInfo: UserInfo) {
-        queries.insertUserInfo(userInfo.filterProperties, userInfo.favoriteStationJsons)
+        queries.insertUserInfo(userInfo.filterProperties, userInfo.favoriteStationJsons, userInfo.userLocation.latitude, userInfo.userLocation.longitude)
     }
 }

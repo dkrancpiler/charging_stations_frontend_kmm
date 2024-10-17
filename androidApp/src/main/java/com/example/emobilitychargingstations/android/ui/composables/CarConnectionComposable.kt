@@ -7,14 +7,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.example.emobilitychargingstations.android.MainActivity.Companion.NAVIGATE_TO_FILTER_SCREEN
 import com.example.emobilitychargingstations.android.MainActivity.Companion.NAVIGATE_TO_MAP_SCREEN
-import com.example.emobilitychargingstations.models.ChargerTypesEnum
 
 @Composable
-fun CarConnectionComposable(navController: NavHostController, chargerType: ChargerTypesEnum?, stopRequest: () -> Unit, startRequest: () -> Unit) {
+fun CarConnectionComposable(navController: NavHostController, stopStationRequest: () -> Unit, startStationRequest: () -> Unit, stopLocationRequest: () -> Unit, startLocationRequest: () -> Unit) {
     val carConnection = CarConnection(LocalContext.current).type.observeAsState()
-    if (chargerType != null) when (carConnection.value) {
+    when (carConnection.value) {
         CarConnection.CONNECTION_TYPE_PROJECTION -> {
-            stopRequest()
+            stopStationRequest()
+            stopLocationRequest()
             navController.currentDestination?.route?.let {
                 navController.popBackStack(
                     it, true)
@@ -23,7 +23,8 @@ fun CarConnectionComposable(navController: NavHostController, chargerType: Charg
         }
         else -> {
             if (navController.currentBackStackEntry?.destination?.route != NAVIGATE_TO_MAP_SCREEN) {
-                startRequest()
+                startStationRequest()
+                startLocationRequest()
                 navController.navigate(NAVIGATE_TO_MAP_SCREEN)
             }
         }

@@ -83,3 +83,20 @@ fun StationDataModel.checkIsStationOfChargingType(chargingTypeEnum: ChargingType
     }
     return result
 }
+
+fun ChargingTypeEnum?.getPowerRangeFromChargingType(): Pair<Float, Float> {
+        return when (this) {
+            ChargingTypeEnum.NORMAL -> {
+                Pair(0f, 6.99f)
+            }
+            ChargingTypeEnum.FAST -> {
+                Pair(7f, 42.99f)
+            }
+            ChargingTypeEnum.RAPID -> {
+                Pair(43f, 2000f)
+            }
+            else -> {
+                Pair(0f, 2000f)
+            }
+        }
+}

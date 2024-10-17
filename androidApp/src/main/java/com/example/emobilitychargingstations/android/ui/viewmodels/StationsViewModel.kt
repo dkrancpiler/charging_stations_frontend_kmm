@@ -14,15 +14,22 @@ import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 
 class StationsViewModel(
     private val userUseCase: UserUseCase,
     private val stationsUseCase: StationsUseCase
 ) : ViewModel() {
+
+    init {
+        startRepeatingStationsRequest()
+    }
 
     private val _stationsData: MutableLiveData<List<StationsUiModel>> = MutableLiveData()
     val stationsData: LiveData<List<StationsUiModel>> = _stationsData
@@ -42,7 +49,6 @@ class StationsViewModel(
                             it.longitude
                         )
                     )
-                    startRepeatingStationsRequest()
                 }
             }
         }
@@ -53,16 +59,19 @@ class StationsViewModel(
     }
 
     private fun setUserLocation(newUserLocation: UserLocation) {
-        stationsUseCase.setTemporaryLocation(newUserLocation)
-        _userLocation.value = newUserLocation
+        viewModelScope.launch(Dispatchers.IO) {
+            userUseCase.setUserLocation(newUserLocation)
+            _userLocation.postValue(newUserLocation)
+        }
     }
     fun startRepeatingStationsRequest() {
         if (stationsJob == null) stationsJob =
-            stationsUseCase.startRepeatingRequest(userLocation.value).onEach { stationList ->
-                if (stationList != null && stationList != _stationsData.value) {
-                    _stationsData.postValue(stationList.map { it.toStationUIModel() })
-                }
-            }.launchIn(viewModelScope)
+                stationsUseCase.startRepeatingRequest().onEach { stationList ->
+                    if (stationList != null && stationList != _stationsData.value) {
+                        _stationsData.postValue(stationList.map { it.toStationUIModel() })
+//                        _stationsData.value = stationList.map { it.toStationUIModel() }
+                    }
+                }.launchIn(CoroutineScope(Dispatchers.IO))
     }
 
     fun stopRepeatingStationsRequest() {
@@ -72,4 +81,7 @@ class StationsViewModel(
 
     fun getUserInfo(): UserInfo? = userUseCase.getUserInfo()
 
+    override fun onCleared() {
+        stationsJob?.cancel()
+    }
 }
