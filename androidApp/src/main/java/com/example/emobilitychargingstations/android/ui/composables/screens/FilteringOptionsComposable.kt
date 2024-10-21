@@ -31,7 +31,8 @@ fun FilteringOptionsComposable(proceedToNextScreen: () -> Unit, userViewModel: U
     val listOfButtonsInfo = mutableListOf<ChargerTypeToggleInfo>()
     val chargerType = userViewModel.getUserInfo()?.filterProperties?.chargerType
     ChargerTypesEnum.entries.forEach {
-        if (it != ChargerTypesEnum.UNKNOWN) listOfButtonsInfo.add(ChargerTypeToggleInfo(chargerType == it, it))
+        val chargerTypeNotSet = chargerType == null && it == ChargerTypesEnum.ALL
+        if (it != ChargerTypesEnum.UNKNOWN) listOfButtonsInfo.add(ChargerTypeToggleInfo(chargerType == it || chargerTypeNotSet , it))
     }
     val socketTypeButtons = remember {
         val listOfButtonsAsStateList = mutableStateListOf<ChargerTypeToggleInfo>()

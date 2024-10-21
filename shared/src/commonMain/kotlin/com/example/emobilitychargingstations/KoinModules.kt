@@ -11,7 +11,7 @@ import com.example.emobilitychargingstations.data.users.UsersRepositoryImpl
 import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
 import com.example.emobilitychargingstations.models.ChargerTypesEnum
-import com.example.emobilitychargingstations.models.StationDataModel
+import com.example.emobilitychargingstations.models.FavoriteStationModel
 import com.example.emobilitychargingstations.models.StationFilterProperties
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -50,15 +50,15 @@ fun provideDataSource(driver: SqlDriver): StationsDatabase {
                 )
             }
         }
-    ), UserInfoEntity.Adapter(favoriteStationsAdapter = object : ColumnAdapter<List<StationDataModel>, String> {
-        override fun decode(databaseValue: String): List<StationDataModel> {
+    ), UserInfoEntity.Adapter(favoriteStationsAdapter = object : ColumnAdapter<List<FavoriteStationModel>, String> {
+        override fun decode(databaseValue: String): List<FavoriteStationModel> {
             return if (databaseValue.isEmpty()){
                 listOf()
             } else {
                 return Json.decodeFromString(databaseValue)
             }
         }
-        override fun encode(value: List<StationDataModel>): String {
+        override fun encode(value: List<FavoriteStationModel>): String {
             return Json.encodeToString(
                 value
             )

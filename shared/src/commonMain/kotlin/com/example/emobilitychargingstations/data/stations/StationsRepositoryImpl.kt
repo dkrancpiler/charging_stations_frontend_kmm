@@ -51,6 +51,8 @@ class StationsRepositoryImpl(stationsDatabase: StationsDatabase, private val sta
         val minLng = userInfo.userLocation.longitude.minus(0.5)
         val maxLat = userInfo.userLocation.latitude.plus(0.5)
         val minLat = userInfo.userLocation.latitude.minus(0.5)
+        val chargerTypeString = if (userInfo.filterProperties?.chargerType != ChargerTypesEnum.ALL && userInfo.filterProperties != null) ("%" + Json.encodeToString(userInfo.filterProperties.chargerType?.name) + "%")
+        else "%%"
         return queries.getAllStationsByLatLng(
             longitudeMin = minLng,
             longitudeMax = maxLng,
@@ -58,7 +60,7 @@ class StationsRepositoryImpl(stationsDatabase: StationsDatabase, private val sta
             latitudeMax = maxLat,
             minimumPower = powerRange.first.toDouble(),
             maximumPower = powerRange.second.toDouble(),
-            chargerType = ("%" + Json.encodeToString(userInfo.filterProperties?.chargerType?.name) + "%")
+            chargerType = chargerTypeString
 
         ).executeAsList().map { it.toStationDataModel()}
     }
@@ -68,12 +70,14 @@ class StationsRepositoryImpl(stationsDatabase: StationsDatabase, private val sta
         limit: Int
     ): List<StationDataModel> {
         val powerRange = userInfo.filterProperties?.chargingType.getPowerRangeFromChargingType()
+        val chargerTypeString = if (userInfo.filterProperties?.chargerType != ChargerTypesEnum.ALL && userInfo.filterProperties != null) ("%" + Json.encodeToString(userInfo.filterProperties.chargerType?.name) + "%")
+        else "%%"
         return queries.getLimitedClosestStationsByLatLngAndUserFilters(
             userLongitude = userInfo.userLocation.longitude,
             userLatitude = userInfo.userLocation.latitude,
             minimumPower = powerRange.first.toDouble(),
             maximumPower = powerRange.second.toDouble(),
-            chargerType = ("%" + Json.encodeToString(userInfo.filterProperties?.chargerType?.name) + "%"),
+            chargerType = chargerTypeString,
             limit = limit.toLong()
         ).executeAsList().map { it.toStationDataModel() }
     }

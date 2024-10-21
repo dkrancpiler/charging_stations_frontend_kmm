@@ -70,7 +70,6 @@ class StationsViewModel(
                 stationsUseCase.startRepeatingRequest().onEach { stationList ->
                     if (stationList != _stationsData.value) {
                         _stationsData.value = stationList.map { it.toStationUIModel() }
-//                        _stationsData.value = stationList.map { it.toStationUIModel() }
                     }
                 }.launchIn(CoroutineScope(Dispatchers.IO))
     }

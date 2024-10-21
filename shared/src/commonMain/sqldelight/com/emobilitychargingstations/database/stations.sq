@@ -1,4 +1,5 @@
 import com.example.emobilitychargingstations.models.ChargerTypesEnum;
+import com.example.emobilitychargingstations.models.FavoriteStationModel;
 import com.example.emobilitychargingstations.models.StationDataModel;
 import com.example.emobilitychargingstations.models.StationFilterProperties;
 import com.example.emobilitychargingstations.models.StationProperties;
@@ -22,10 +23,19 @@ CREATE TABLE IF NOT EXISTS stationEntity(
 CREATE TABLE IF NOT EXISTS userInfoEntity(
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  filterProperties TEXT AS StationFilterProperties,
- favoriteStations TEXT AS List<StationDataModel>,
+ favoriteStations TEXT AS List<FavoriteStationModel>,
  lastKnownLatitude REAL,
  lastKnownLongitude REAL
 );
+
+updateFavoriteStations:
+UPDATE userInfoEntity SET favoriteStations = :favoriteStations WHERE id = 1;
+
+updateFilterProperties:
+UPDATE userInfoEntity SET filterProperties = :filterProperties WHERE id = 1;
+
+updateUserLocation:
+UPDATE userInfoEntity SET lastKnownLongitude = :lastKnownLongitude, lastKnownLatitude =:lastKnownLatitude WHERE id = 1;
 
 insertUserInfo:
 INSERT OR REPLACE INTO userInfoEntity(id, filterProperties, favoriteStations, lastKnownLatitude, lastKnownLongitude) VALUES (1, ?, ?, ?, ?);
@@ -35,6 +45,11 @@ SELECT * FROM userInfoEntity;
 
 checkIfStationsExist:
 SELECT * FROM stationEntity LIMIT 1;
+
+getStationById:
+SELECT *
+FROM stationEntity
+WHERE (id = :stationId);
 
 getAllStationsByLatLng:
 SELECT *

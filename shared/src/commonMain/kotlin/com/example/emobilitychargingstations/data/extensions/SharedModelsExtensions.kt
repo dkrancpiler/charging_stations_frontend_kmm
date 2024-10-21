@@ -12,47 +12,9 @@ fun List<StationDataModel>.filterByChargerType(chargerType: ChargerTypesEnum?): 
                     station.operator.lowercase().contains("tesla") || stationChargerType == chargerType
                 }
                 else stationChargerType == chargerType
-//                        || stationChargerType == ChargerTypesEnum.UNKNOWN
             } ?: false
         }
     }
-//    val keywords = mutableListOf<String>()
-//    when (chargerType) {
-//        ChargerTypesEnum.AC_TYPE_2 -> {
-//            keywords.add("typ 2")
-//            keywords.add("typ2")
-//        }
-//        ChargerTypesEnum.AC_TYPE_1 -> {
-//            keywords.add("Typ1")
-//            keywords.add("Typ 1")
-//        }
-//        ChargerTypesEnum.DC_EU -> {
-//            keywords.add("DC Kupplung Combo")
-//        }
-//        ChargerTypesEnum.DC_CHADEMO -> {
-//            keywords.add("chademo")
-//        }
-//        ChargerTypesEnum.TESLA -> {
-//            keywords.add("tesla")
-//        }
-//        ChargerTypesEnum.ALL -> {
-//        }
-//        else -> {}
-//    }
-//    return if (keywords.isEmpty()) this
-//    else this.filter { station ->
-//        var result = false
-////        if (station.properties.socket_type_list == null) result = true
-////        else {
-//            keywords.forEach { keyword ->
-//                if (keyword == "tesla" && station.operator?.contains(keyword, true) == true) result = true
-//                else station.listOfChargerTypes?.forEach {
-//                    if (it.contains(keyword, true)) result = true
-//                }
-//            }
-////        }
-//        result
-//    }
 }
 
 fun List<StationDataModel>.filterByChargingType(chargingTypeEnum: ChargingTypeEnum): List<StationDataModel> {

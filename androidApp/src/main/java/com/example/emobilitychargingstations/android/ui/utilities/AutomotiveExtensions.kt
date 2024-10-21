@@ -20,10 +20,14 @@ import androidx.car.app.model.Row
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.lifecycleScope
 import com.comsystoreply.emobilitychargingstations.android.R
+import com.example.emobilitychargingstations.android.mappers.toStationDataModel
 import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
+import com.example.emobilitychargingstations.models.FavoriteStationDataModel
 import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
+import kotlinx.coroutines.launch
 
 fun getPlaceWithMarker(
     latitude: Double,
@@ -89,25 +93,27 @@ fun Screen.getMessageTemplateBuilderWithTitle(title: String, message: String): M
     return messageTemplateBuilder
 }
 
-// TODO: FIX FAVORITES
-fun Screen.getFavoritesAction(stationJson: StationsUiModel, userInfo: UserInfo?, onFavoriteChange: (userInfo: UserInfo) -> Unit): Action {
-    val isAlreadyInFavorites = userInfo?.favoriteStationJsons?.firstOrNull { it.id == stationJson.id }?.let { true } ?: false
-    val actionText = if (isAlreadyInFavorites) getString(R.string.auto_navigation_complete_remove_action) else getString(R.string.auto_navigation_complete_add_action)
+fun Screen.getFavoritesAction(
+    stationModel: StationsUiModel,
+    userInfo: UserInfo,
+    onFavoriteAdded: (favoriteStation: FavoriteStationDataModel, userInfo: UserInfo) -> Unit,
+    onFavoriteRemoved: (favoriteStation: FavoriteStationDataModel, userInfo: UserInfo) -> Unit,
+): Action {
+    val favoriteStation = userInfo.favoriteStationsList?.firstOrNull { it.station.id == stationModel.id }
+    val actionText =
+        if (favoriteStation != null) getString(R.string.auto_navigation_complete_remove_action) else getString(
+            R.string.auto_navigation_complete_add_action
+        )
     return Action.Builder().apply {
         setTitle(actionText)
         setOnClickListener {
-//            lifecycleScope.launch {
-//                if (isAlreadyInFavorites) {
-//                    userInfo?.favoriteStationJsons?.remove(stationJson)
-//                    onFavoriteChange(userInfo!!)
-//                } else {
-//                    if (userInfo?.favoriteStationJsons.isNullOrEmpty()) onFavoriteChange(UserInfo(filterProperties = userInfo?.filterProperties, favoriteStationJsons = mutableListOf(stationJson)))
-//                    else {
-//                        userInfo?.favoriteStationJsons?.add(stationJson)
-//                        onFavoriteChange(userInfo!!)
-//                    }
-//                }
-//            }
+            lifecycleScope.launch {
+                if (favoriteStation != null) {
+                    onFavoriteRemoved(favoriteStation, userInfo)
+                } else {
+                    onFavoriteAdded(FavoriteStationDataModel(station = stationModel.toStationDataModel()), userInfo)
+                }
+            }
         }
     }.build()
 }

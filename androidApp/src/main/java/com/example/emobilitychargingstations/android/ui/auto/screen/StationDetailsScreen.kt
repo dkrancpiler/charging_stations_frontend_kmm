@@ -9,7 +9,6 @@ import androidx.car.app.model.CarColor
 import androidx.car.app.model.Pane
 import androidx.car.app.model.PaneTemplate
 import androidx.car.app.model.Template
-import androidx.lifecycle.lifecycleScope
 import com.comsystoreply.emobilitychargingstations.android.R
 import com.example.emobilitychargingstations.android.ui.auto.BaseScreen
 import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
@@ -19,13 +18,19 @@ import com.example.emobilitychargingstations.android.ui.utilities.getFavoritesAc
 import com.example.emobilitychargingstations.android.ui.utilities.getString
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargingType
 import com.example.emobilitychargingstations.data.extensions.getChargingTypeFromMaxKW
-import com.example.emobilitychargingstations.models.UserInfo
-import kotlinx.coroutines.launch
 
 class StationDetailsScreen(carContext: CarContext, private val stationsUiModel: StationsUiModel, private val showFavoritesAction: Boolean = false) : BaseScreen(carContext) {
 
+    init {
+        if (showFavoritesAction) {
+            userInfoForFavorites.observe(this) {
+                invalidate()
+            }
+            startObservingForFavorites()
+        }
+    }
+
     override fun onGetTemplate(): Template {
-        val userInfo = userUseCase.getUserInfo()
         val actionTitle = if (stationsUiModel.isNavigatingTo) getString(R.string.auto_station_details_stop_navigation) else getString(R.string.auto_station_details_start_navigation)
         val stationsPane = Pane.Builder().apply {
             addAction(
@@ -35,7 +40,7 @@ class StationDetailsScreen(carContext: CarContext, private val stationsUiModel: 
                     setOnClickListener(this@StationDetailsScreen::changeNavigation).build()
                 }.build()
             )
-            if (showFavoritesAction) addAction(getFavoritesAction(stationsUiModel, userInfo, ::onFavoriteChanged))
+            if (showFavoritesAction && userInfoForFavorites.value != null) addAction(getFavoritesAction(stationsUiModel, userInfoForFavorites.value!!, ::onFavoriteAdded, :: onFavoriteRemoved))
             addRow(
                 buildRowWithText(
                     title = SpannableString(getString(R.string.auto_station_details_station_capacity)),
@@ -65,7 +70,7 @@ class StationDetailsScreen(carContext: CarContext, private val stationsUiModel: 
     private fun getSocketTypeString() : String {
         val socketTypeString = if (stationsUiModel.listOfChargerTypes == null) getString(R.string.auto_station_details_unknown_charger) else {
             var resultingString = ""
-            stationsUiModel.listOfChargerTypes!!.groupingBy { it }.eachCount().filterValues { it >= 1 }.keys.forEach {
+            stationsUiModel.listOfChargerTypes.groupingBy { it }.eachCount().filterValues { it >= 1 }.keys.forEach {
                 resultingString = if (resultingString.isEmpty()) it.name
                 else "$resultingString, ${it.name}"
             }
@@ -89,13 +94,6 @@ class StationDetailsScreen(carContext: CarContext, private val stationsUiModel: 
             carContext.startCarApp(intent)
         }
         screenManager.popTo(AUTO_POI_MAP_SCREEN_MARKER)
-    }
-
-    private fun onFavoriteChanged(userInfo: UserInfo) {
-        lifecycleScope.launch {
-            userUseCase.setUserInfo(userInfo)
-            screenManager.popTo(AUTO_POI_MAP_SCREEN_MARKER)
-        }
     }
 
 }
