@@ -11,7 +11,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
 @SuppressLint("MissingPermission")
-class LocationRequestStarter(context: Context, locationCallback : LocationCallback) {
+class LocationRequestStarter(context: Context, private val locationCallback : LocationCallback) {
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
     private val locationRequest =
         LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_REQUEST_REFRESH_VALUE_IN_MS).apply {
@@ -19,7 +19,12 @@ class LocationRequestStarter(context: Context, locationCallback : LocationCallba
             setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
             setWaitForAccurateLocation(true)
         }.build()
-    init {
+
+    fun startRequestingLocation() {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+    }
+
+    fun stopRequestingLocation() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }

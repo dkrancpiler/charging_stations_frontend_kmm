@@ -1,21 +1,26 @@
 package com.example.emobilitychargingstations.android.ui.viewmodels
 
 import android.location.Location
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.comsystoreply.emobilitychargingstations.android.BuildConfig
+import com.example.emobilitychargingstations.android.mappers.toStationUIModel
+import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
 import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
-import com.example.emobilitychargingstations.models.Station
 import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 
 class StationsViewModel(
@@ -23,11 +28,15 @@ class StationsViewModel(
     private val stationsUseCase: StationsUseCase
 ) : ViewModel() {
 
-    private val _stationsData: MutableLiveData<List<Station>> = MutableLiveData()
-    val stationsData: LiveData<List<Station>> = _stationsData
+    init {
+        startRepeatingStationsRequest()
+    }
 
-    private val _userLocation : MutableLiveData<UserLocation> = MutableLiveData()
-    val userLocation: LiveData<UserLocation> = _userLocation
+    private val _stationsData: MutableState<List<StationsUiModel>?> = mutableStateOf(null)
+    val stationsData: State<List<StationsUiModel>?> = _stationsData
+
+    private val _userLocation : MutableState<UserLocation?> = mutableStateOf(null)
+    val userLocation: State<UserLocation?> = _userLocation
 
     private var stationsJob: Job? = null
 
@@ -41,7 +50,6 @@ class StationsViewModel(
                             it.longitude
                         )
                     )
-                    startRepeatingStationsRequest()
                 }
             }
         }
@@ -52,15 +60,18 @@ class StationsViewModel(
     }
 
     private fun setUserLocation(newUserLocation: UserLocation) {
-        stationsUseCase.setTemporaryLocation(newUserLocation)
-        _userLocation.value = newUserLocation
+        viewModelScope.launch(Dispatchers.IO) {
+            userUseCase.setUserLocation(newUserLocation)
+            _userLocation.value = newUserLocation
+        }
     }
     fun startRepeatingStationsRequest() {
-        if (stationsJob == null) stationsJob = stationsUseCase.startRepeatingRequest( userLocation.value).onEach {
-            if (it != null && it != _stationsData.value) {
-                _stationsData.postValue(it)
-            }
-        }.launchIn(viewModelScope)
+        if (stationsJob == null) stationsJob =
+                stationsUseCase.startRepeatingRequest().onEach { stationList ->
+                    if (stationList != _stationsData.value) {
+                        _stationsData.value = stationList.map { it.toStationUIModel() }
+                    }
+                }.launchIn(CoroutineScope(Dispatchers.IO))
     }
 
     fun stopRepeatingStationsRequest() {
@@ -70,4 +81,7 @@ class StationsViewModel(
 
     fun getUserInfo(): UserInfo? = userUseCase.getUserInfo()
 
+    override fun onCleared() {
+        stationsJob?.cancel()
+    }
 }

@@ -10,7 +10,8 @@ import com.example.emobilitychargingstations.data.users.UsersRepository
 import com.example.emobilitychargingstations.data.users.UsersRepositoryImpl
 import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
-import com.example.emobilitychargingstations.models.Station
+import com.example.emobilitychargingstations.models.ChargerTypesEnum
+import com.example.emobilitychargingstations.models.FavoriteStationModel
 import com.example.emobilitychargingstations.models.StationFilterProperties
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -34,30 +35,30 @@ fun provideApi(): StationsApi {
 
 fun provideDataSource(driver: SqlDriver): StationsDatabase {
     return StationsDatabase(driver, StationEntity.Adapter(
-        featuresAdapter = object : ColumnAdapter<List<Station>, String> {
-            override fun decode(databaseValue: String): List<Station> {
-                return if (databaseValue.isEmpty()){
+        listOfChargerTypesAdapter = object : ColumnAdapter<List<ChargerTypesEnum>, String> {
+            override fun decode(databaseValue: String): List<ChargerTypesEnum> {
+                return if (databaseValue.isEmpty()) {
                     listOf()
                 } else {
-                    return Json.decodeFromString<List<Station>>(databaseValue)
+                    return Json.decodeFromString(databaseValue)
                 }
             }
 
-            override fun encode(value: List<Station>): String {
+            override fun encode(value: List<ChargerTypesEnum>): String {
                 return Json.encodeToString(
                     value
                 )
             }
         }
-    ), UserInfoEntity.Adapter(favoriteStationsAdapter = object : ColumnAdapter<List<Station>, String> {
-        override fun decode(databaseValue: String): List<Station> {
+    ), UserInfoEntity.Adapter(favoriteStationsAdapter = object : ColumnAdapter<List<FavoriteStationModel>, String> {
+        override fun decode(databaseValue: String): List<FavoriteStationModel> {
             return if (databaseValue.isEmpty()){
                 listOf()
             } else {
-                return Json.decodeFromString<List<Station>>(databaseValue)
+                return Json.decodeFromString(databaseValue)
             }
         }
-        override fun encode(value: List<Station>): String {
+        override fun encode(value: List<FavoriteStationModel>): String {
             return Json.encodeToString(
                 value
             )

@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.comsystoreply.emobilitychargingstations.android.R
-import com.example.emobilitychargingstations.android.models.ChargingTypeToggleInfo
+import com.example.emobilitychargingstations.android.ui.models.ChargingTypeToggleInfo
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargingType
 import com.example.emobilitychargingstations.android.ui.viewmodels.UserViewModel
 import com.example.emobilitychargingstations.models.ChargingTypeEnum
@@ -30,15 +30,14 @@ import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun StationsFilterComposable(userViewModel: UserViewModel = koinViewModel(), navigateToChargerType: () -> Unit) {
-    val userInfo = userViewModel.getUserInfo()
+fun StationsFilterComposable(navigateToChargerType: () -> Unit) {
     Box {
         val context = LocalContext.current
         Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
             .padding(8.dp)
             .fillMaxSize()
             .background(Color.White)) {
-            ChargingTypeFilterComposable(userInfo?.filterProperties?.chargingType)
+            ChargingTypeFilterComposable()
             Button(onClick = { navigateToChargerType() }) {
                 Text(stringResource(id = R.string.android_change_charging_type))
             }
@@ -50,10 +49,11 @@ fun StationsFilterComposable(userViewModel: UserViewModel = koinViewModel(), nav
 }
 
 @Composable
-fun ChargingTypeFilterComposable(chargingTypeEnum: ChargingTypeEnum?) {
+fun ChargingTypeFilterComposable(userViewModel: UserViewModel = koinViewModel()) {
+    val userInfo = userViewModel.getUserInfo()
     val listOfButtonsInfo = mutableListOf<ChargingTypeToggleInfo>()
-    ChargingTypeEnum.values().forEach {
-        listOfButtonsInfo.add(ChargingTypeToggleInfo((chargingTypeEnum ?: ChargingTypeEnum.ANY) == it, it))
+    ChargingTypeEnum.entries.forEach {
+        listOfButtonsInfo.add(ChargingTypeToggleInfo((userInfo?.filterProperties?.chargingType ?: ChargingTypeEnum.ANY) == it, it))
     }
     val socketTypeButtons = remember {
         val mutableStateList = mutableStateListOf<ChargingTypeToggleInfo>()
@@ -61,15 +61,15 @@ fun ChargingTypeFilterComposable(chargingTypeEnum: ChargingTypeEnum?) {
         mutableStateList
     }
     Text(stringResource(R.string.android_charging_type_selection))
-    ChargingTypeButtonsComposable(socketTypeButtons = socketTypeButtons)
+    ChargingTypeButtonsComposable(socketTypeButtons = socketTypeButtons, userViewModel::setChargingType)
 }
 
 @Composable
-fun ChargingTypeButtonsComposable(socketTypeButtons: SnapshotStateList<ChargingTypeToggleInfo>, userViewModel: UserViewModel = koinViewModel()) {
+fun ChargingTypeButtonsComposable(socketTypeButtons: SnapshotStateList<ChargingTypeToggleInfo>, changeChargingType: (ChargingTypeEnum) -> Unit) {
     socketTypeButtons.forEach { toggleInfo ->
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
             RadioButton(selected = toggleInfo.isChecked, onClick = {
-                userViewModel.setChargingType(toggleInfo.chargingType)
+                changeChargingType(toggleInfo.chargingType)
                 socketTypeButtons.replaceAll {
                     it.copy(isChecked = it.chargingType == toggleInfo.chargingType)
                 }

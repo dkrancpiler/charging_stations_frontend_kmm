@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.comsystoreply.emobilitychargingstations.android.R
-import com.example.emobilitychargingstations.android.models.ChargerTypeToggleInfo
+import com.example.emobilitychargingstations.android.ui.models.ChargerTypeToggleInfo
 import com.example.emobilitychargingstations.android.ui.utilities.getStringIdFromChargerType
 import com.example.emobilitychargingstations.android.ui.viewmodels.UserViewModel
 import com.example.emobilitychargingstations.models.ChargerTypesEnum
@@ -31,7 +31,8 @@ fun FilteringOptionsComposable(proceedToNextScreen: () -> Unit, userViewModel: U
     val listOfButtonsInfo = mutableListOf<ChargerTypeToggleInfo>()
     val chargerType = userViewModel.getUserInfo()?.filterProperties?.chargerType
     ChargerTypesEnum.entries.forEach {
-        listOfButtonsInfo.add(ChargerTypeToggleInfo(chargerType == it, it))
+        val chargerTypeNotSet = chargerType == null && it == ChargerTypesEnum.ALL
+        if (it != ChargerTypesEnum.UNKNOWN) listOfButtonsInfo.add(ChargerTypeToggleInfo(chargerType == it || chargerTypeNotSet , it))
     }
     val socketTypeButtons = remember {
         val listOfButtonsAsStateList = mutableStateListOf<ChargerTypeToggleInfo>()

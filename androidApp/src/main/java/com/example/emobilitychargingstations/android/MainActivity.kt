@@ -22,6 +22,7 @@ import org.osmdroid.config.Configuration
 class MainActivity : ComponentActivity() {
 
     private val stationsViewModel: StationsViewModel by viewModel()
+    private var locationRequestStarter: LocationRequestStarter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,9 +44,10 @@ class MainActivity : ComponentActivity() {
                                     NavigationHostComposable(navController, startDestination)
                                     CarConnectionComposable(
                                         navController,
-                                        userInfo?.filterProperties?.chargerType,
                                         stationsViewModel::stopRepeatingStationsRequest,
-                                        stationsViewModel::startRepeatingStationsRequest
+                                        stationsViewModel::startRepeatingStationsRequest,
+                                        ::stopRequestingLocation,
+                                        ::startRequestingLocation
                                     )
                                 }
                             }
@@ -58,7 +60,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startRequestingLocation() {
-        LocationRequestStarter(this, stationsViewModel.locationCallback)
+        if (locationRequestStarter == null) {
+            locationRequestStarter = LocationRequestStarter(this, stationsViewModel.locationCallback)
+            locationRequestStarter?.startRequestingLocation()
+        }
+    }
+
+    private fun stopRequestingLocation() {
+        locationRequestStarter?.stopRequestingLocation()
+        locationRequestStarter = null
     }
 
     companion object {

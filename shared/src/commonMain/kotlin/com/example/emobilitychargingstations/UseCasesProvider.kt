@@ -4,7 +4,6 @@ import com.example.emobilitychargingstations.domain.stations.StationsUseCase
 import com.example.emobilitychargingstations.domain.user.UserUseCase
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
-import org.koin.core.component.inject
 
 class UseCasesProvider(): KoinComponent {
     fun userUseCase() = get<UserUseCase>()

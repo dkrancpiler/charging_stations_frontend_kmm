@@ -22,9 +22,9 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.lifecycleScope
 import com.comsystoreply.emobilitychargingstations.android.R
-import com.example.emobilitychargingstations.data.extensions.getLatitude
-import com.example.emobilitychargingstations.data.extensions.getLongitude
-import com.example.emobilitychargingstations.models.Station
+import com.example.emobilitychargingstations.android.mappers.toStationDataModel
+import com.example.emobilitychargingstations.android.ui.models.StationsUiModel
+import com.example.emobilitychargingstations.models.FavoriteStationDataModel
 import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
 import kotlinx.coroutines.launch
@@ -93,22 +93,25 @@ fun Screen.getMessageTemplateBuilderWithTitle(title: String, message: String): M
     return messageTemplateBuilder
 }
 
-fun Screen.getFavoritesAction(station: Station, userInfo: UserInfo?, onFavoriteChange: (userInfo: UserInfo) -> Unit): Action {
-    val isAlreadyInFavorites = userInfo?.favoriteStations?.firstOrNull { it.id == station.id }?.let { true } ?: false
-    val actionText = if (isAlreadyInFavorites) getString(R.string.auto_navigation_complete_remove_action) else getString(R.string.auto_navigation_complete_add_action)
+fun Screen.getFavoritesAction(
+    stationModel: StationsUiModel,
+    userInfo: UserInfo,
+    onFavoriteAdded: (favoriteStation: FavoriteStationDataModel, userInfo: UserInfo) -> Unit,
+    onFavoriteRemoved: (favoriteStation: FavoriteStationDataModel, userInfo: UserInfo) -> Unit,
+): Action {
+    val favoriteStation = userInfo.favoriteStationsList?.firstOrNull { it.station.id == stationModel.id }
+    val actionText =
+        if (favoriteStation != null) getString(R.string.auto_navigation_complete_remove_action) else getString(
+            R.string.auto_navigation_complete_add_action
+        )
     return Action.Builder().apply {
         setTitle(actionText)
         setOnClickListener {
             lifecycleScope.launch {
-                if (isAlreadyInFavorites) {
-                    userInfo?.favoriteStations?.remove(station)
-                    onFavoriteChange(userInfo!!)
+                if (favoriteStation != null) {
+                    onFavoriteRemoved(favoriteStation, userInfo)
                 } else {
-                    if (userInfo?.favoriteStations.isNullOrEmpty()) onFavoriteChange(UserInfo(filterProperties = userInfo?.filterProperties, favoriteStations = mutableListOf(station)))
-                    else {
-                        userInfo?.favoriteStations?.add(station)
-                        onFavoriteChange(userInfo!!)
-                    }
+                    onFavoriteAdded(FavoriteStationDataModel(station = stationModel.toStationDataModel()), userInfo)
                 }
             }
         }
@@ -125,15 +128,15 @@ fun Screen.getDrawableAsBitmap(resourceId: Int) = AppCompatResources.getDrawable
 fun Screen.getString(stringId: Int): String = this.carContext.getString(stringId)
 fun Screen.getString(stringId: Int, stringArgument: String): String = this.carContext.getString(stringId, stringArgument)
 
-fun Station.getTitleAsSpannableStringAndAddDistance(userLocation: UserLocation): SpannableString {
-    val title = SpannableString("${properties.street} - ")
+fun StationsUiModel.getTitleAsSpannableStringAndAddDistance(userLocation: UserLocation): SpannableString {
+    val title = SpannableString("${street} - ")
     val distanceResult: FloatArray = floatArrayOf(0.0f)
     this.let {
         Location.distanceBetween(
             userLocation.latitude,
             userLocation.longitude,
-            it.geometry.getLatitude(),
-            it.geometry.getLongitude(),
+            latitude,
+            longitude,
             distanceResult
         )
         title.setSpan(

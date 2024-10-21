@@ -72,8 +72,6 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class:1.2.1")
     implementation("androidx.activity:activity-compose:1.8.2")
 
-//    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-
     implementation("org.osmdroid:osmdroid-android:6.1.16")
     implementation ("com.github.MKergall:osmbonuspack:6.9.0")
 

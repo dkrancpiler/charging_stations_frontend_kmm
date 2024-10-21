@@ -1,31 +1,72 @@
 import com.example.emobilitychargingstations.models.ChargerTypesEnum;
-import com.example.emobilitychargingstations.models.Station;
+import com.example.emobilitychargingstations.models.FavoriteStationModel;
+import com.example.emobilitychargingstations.models.StationDataModel;
 import com.example.emobilitychargingstations.models.StationFilterProperties;
+import com.example.emobilitychargingstations.models.StationProperties;
+import kotlin.Boolean;
 import kotlin.collections.List;
 
 CREATE TABLE IF NOT EXISTS stationEntity(
-    type Text NOT NULL PRIMARY KEY,
-    features TEXT AS List<Station>
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    numberOfChargers INTEGER,
+    maximumPowerInKw REAL,
+    operator TEXT NOT NULL,
+    listOfChargerTypes TEXT AS List<ChargerTypesEnum>,
+    street TEXT NOT NULL,
+    town TEXT NOT NULL,
+    dataSource TEXT,
+    dcSupport INTEGER AS Boolean DEFAULT 0,
+    latitude REAL,
+    longitude REAL
 );
 
 CREATE TABLE IF NOT EXISTS userInfoEntity(
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  filterProperties TEXT AS StationFilterProperties,
- favoriteStations TEXT AS List<Station>
+ favoriteStations TEXT AS List<FavoriteStationModel>,
+ lastKnownLatitude REAL,
+ lastKnownLongitude REAL
 );
 
+updateFavoriteStations:
+UPDATE userInfoEntity SET favoriteStations = :favoriteStations WHERE id = 1;
+
+updateFilterProperties:
+UPDATE userInfoEntity SET filterProperties = :filterProperties WHERE id = 1;
+
+updateUserLocation:
+UPDATE userInfoEntity SET lastKnownLongitude = :lastKnownLongitude, lastKnownLatitude =:lastKnownLatitude WHERE id = 1;
+
 insertUserInfo:
-INSERT OR REPLACE INTO userInfoEntity(id, filterProperties, favoriteStations) VALUES (1, ?, ?);
+INSERT OR REPLACE INTO userInfoEntity(id, filterProperties, favoriteStations, lastKnownLatitude, lastKnownLongitude) VALUES (1, ?, ?, ?, ?);
 
 getUserInfo:
 SELECT * FROM userInfoEntity;
 
-getAllStations:
-SELECT * FROM stationEntity;
+checkIfStationsExist:
+SELECT * FROM stationEntity LIMIT 1;
+
+getStationById:
+SELECT *
+FROM stationEntity
+WHERE (id = :stationId);
+
+getAllStationsByLatLng:
+SELECT *
+FROM stationEntity
+WHERE (longitude BETWEEN :longitudeMin AND :longitudeMax)
+AND (latitude BETWEEN :latitudeMin AND :latitudeMax)
+AND (listOfChargerTypes LIKE :chargerType)
+AND (maximumPowerInKw BETWEEN :minimumPower AND :maximumPower);
+
+getLimitedClosestStationsByLatLngAndUserFilters:
+SELECT *
+FROM stationEntity
+WHERE (listOfChargerTypes LIKE :chargerType)
+AND (maximumPowerInKw BETWEEN :minimumPower AND :maximumPower)
+ORDER BY (ABS(longitude - :userLongitude) + ABS(latitude - :userLatitude)) ASC
+LIMIT :limit;
 
 insertStation:
 INSERT OR REPLACE
-INTO stationEntity(
-    type,
-    features
-) VALUES (?, ?);
+INTO stationEntity VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

@@ -18,3 +18,16 @@ data class StationProperties (
     var availableChargingStations: Int = 0
     ) {
 }
+
+fun getEmptyProperties(): StationProperties = StationProperties(
+    station_id = -1,
+    capacity = null,
+    data_source = null,
+    dc_support = null,
+    max_kw = null,
+    operator = null,
+    socket_type_list = null,
+    street = null,
+    total_kw = null,
+    town = null,
+)
