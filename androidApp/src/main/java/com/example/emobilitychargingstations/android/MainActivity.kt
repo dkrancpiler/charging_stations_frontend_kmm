@@ -11,7 +11,6 @@ import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.comsystoreply.emobilitychargingstations.android.BuildConfig
-import com.comsystoreply.emobilitychargingstations.android.MyApplicationTheme
 import com.example.emobilitychargingstations.android.ui.composables.CarConnectionComposable
 import com.example.emobilitychargingstations.android.ui.composables.NavigationHostComposable
 import com.example.emobilitychargingstations.android.ui.utilities.LocationRequestStarter
@@ -75,6 +74,7 @@ class MainActivity : ComponentActivity() {
         const val NAVIGATE_TO_CHARGER_SELECTION = "chargerSelectionScreen"
         const val NAVIGATE_TO_MAP_SCREEN = "mapScreen"
         const val NAVIGATE_TO_FILTER_SCREEN = "filterScreen"
+        const val NAVIGATE_TO_EDIT_FAVORITES = "editFavoriteScreen"
 
         const val ARGUMENT_NAVIGATE_TO_NEXT = "navigateToNext"
     }

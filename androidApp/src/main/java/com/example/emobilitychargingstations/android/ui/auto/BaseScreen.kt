@@ -24,14 +24,23 @@ abstract class BaseScreen(carContext: CarContext): Screen(carContext), KoinCompo
     val stationsUseCase by inject<StationsUseCase> ()
 
     fun startObservingForFavorites() {
-        CoroutineScope(Dispatchers.IO).launch {
-            userUseCase.getUserInfoWithFavoritesAsFlow().collectLatest { userInfoData ->
-                userInfoData?.let {
-                    if (it.favoriteStationsList != userInfoForFavorites.value?.favoriteStationsList) {
-                        userInfoForFavorites.postValue(it)
-                    }
-                }
-            }
+        userUseCase.startObservingForFavorites { userInfo ->
+            onUserInfoChange(userInfo)
+        }
+//        CoroutineScope(Dispatchers.IO).launch {
+//            userUseCase.getUserInfoWithFavoritesAsFlow().collectLatest { userInfoData ->
+//                userInfoData?.let {
+//                    if (it.favoriteStationsList != userInfoForFavorites.value?.favoriteStationsList) {
+//                        userInfoForFavorites.postValue(it)
+//                    }
+//                }
+//            }
+//        }
+    }
+
+    private fun onUserInfoChange(userInfo: UserInfo) {
+        if (userInfo.favoriteStationsList != userInfoForFavorites.value?.favoriteStationsList) {
+            userInfoForFavorites.postValue(userInfo)
         }
     }
 

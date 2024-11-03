@@ -133,9 +133,8 @@ class ChargingMapScreen(carContext: CarContext): BaseScreen(carContext), OnScree
         val mapTemplateBuilder = PlaceListMapTemplate.Builder().setActionStrip(actionStrip)
         val carIcon = getDrawableAsBitmap(R.drawable.electric_car_icon)
         mapTemplateBuilder.setTitle(getString(R.string.auto_map_title))
-        if (initialUserLocation == null || twoClosestStations.isEmpty())
+        if (initialUserLocation == null)
             return mapTemplateBuilder.setLoading(true)
-
         mapTemplateBuilder.setAnchor(
             getPlaceWithMarker(
                 initialUserLocation!!.latitude,

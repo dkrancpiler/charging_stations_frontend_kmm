@@ -8,8 +8,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.emobilitychargingstations.android.MainActivity.Companion.ARGUMENT_NAVIGATE_TO_NEXT
 import com.example.emobilitychargingstations.android.MainActivity.Companion.NAVIGATE_TO_CHARGER_SELECTION
+import com.example.emobilitychargingstations.android.MainActivity.Companion.NAVIGATE_TO_EDIT_FAVORITES
 import com.example.emobilitychargingstations.android.MainActivity.Companion.NAVIGATE_TO_FILTER_SCREEN
 import com.example.emobilitychargingstations.android.MainActivity.Companion.NAVIGATE_TO_MAP_SCREEN
+import com.example.emobilitychargingstations.android.ui.composables.screens.EditFavoritesComposable
 import com.example.emobilitychargingstations.android.ui.composables.screens.FilteringOptionsComposable
 import com.example.emobilitychargingstations.android.ui.composables.screens.MapViewComposable
 import com.example.emobilitychargingstations.android.ui.composables.screens.StationsFilterComposable
@@ -43,6 +45,11 @@ fun NavigationHostComposable(navController: NavHostController, startDestination:
         StationsFilterComposable(navigateToChargerType = {
             navController.navigate(
                 "$NAVIGATE_TO_CHARGER_SELECTION?$ARGUMENT_NAVIGATE_TO_NEXT=false")
+        }, navigateToEditFavorites =  {
+            navController.navigate(NAVIGATE_TO_EDIT_FAVORITES)
         })
+    }
+    composable(NAVIGATE_TO_EDIT_FAVORITES) {
+        EditFavoritesComposable()
     }
 }

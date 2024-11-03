@@ -1,4 +1,4 @@
-package com.comsystoreply.emobilitychargingstations.android
+package com.example.emobilitychargingstations.android
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape

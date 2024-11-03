@@ -39,7 +39,6 @@ fun FilteringOptionsComposable(proceedToNextScreen: () -> Unit, userViewModel: U
         listOfButtonsAsStateList.addAll(listOfButtonsInfo)
         listOfButtonsAsStateList
     }
-
     Box {
         Column(
             modifier = Modifier

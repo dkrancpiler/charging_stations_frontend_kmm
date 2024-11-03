@@ -30,9 +30,8 @@ import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun StationsFilterComposable(navigateToChargerType: () -> Unit) {
+fun StationsFilterComposable(navigateToChargerType: () -> Unit, navigateToEditFavorites: () -> Unit) {
     Box {
-        val context = LocalContext.current
         Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
             .padding(8.dp)
             .fillMaxSize()
@@ -41,7 +40,7 @@ fun StationsFilterComposable(navigateToChargerType: () -> Unit) {
             Button(onClick = { navigateToChargerType() }) {
                 Text(stringResource(id = R.string.android_change_charging_type))
             }
-            Button(onClick = { Toast.makeText(context, "Not yet implemented", Toast.LENGTH_SHORT).show() }) {
+            Button(onClick = { navigateToEditFavorites() }) {
                 Text(text = stringResource(id = R.string.android_edit_favorites))
             }
         }
