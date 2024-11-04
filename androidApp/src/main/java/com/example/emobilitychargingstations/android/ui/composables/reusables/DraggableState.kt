@@ -6,19 +6,23 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import com.example.emobilitychargingstations.android.ui.composables.getVisibleItemInfoFor
+import com.example.emobilitychargingstations.android.ui.composables.offsetEnd
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class DragDropState internal constructor(
+class DragDropState(
     val state: LazyListState,
     private val scope: CoroutineScope,
     private val onSwap: (Int, Int) -> Unit
 ) {
-    private var draggedDistance by mutableStateOf(0f)
-    private var draggingItemInitialOffset by mutableStateOf(0)
+    private var draggedDistance by mutableFloatStateOf(0f)
+    private var draggingItemInitialOffset by mutableIntStateOf(0)
     internal val draggingItemOffset: Float
         get() = draggingItemLayoutInfo?.let { item ->
             draggingItemInitialOffset + draggedDistance - item.offset
@@ -32,7 +36,6 @@ class DragDropState internal constructor(
     internal var previousItemOffset = Animatable(0f)
         private set
 
-    // used to obtain initial offsets on drag start
     private var initiallyDraggedElement by mutableStateOf<LazyListItemInfo?>(null)
 
     var currentIndexOfDraggedItem by mutableStateOf<Int?>(null)
@@ -59,9 +62,7 @@ class DragDropState internal constructor(
     fun onDragInterrupted() {
         if (currentIndexOfDraggedItem != null) {
             previousIndexOfDraggedItem = currentIndexOfDraggedItem
-            // val startOffset = draggingItemOffset
             scope.launch {
-                //previousItemOffset.snapTo(startOffset)
                 previousItemOffset.animateTo(
                     0f,
                     tween(easing = FastOutLinearInEasing)
@@ -118,14 +119,4 @@ class DragDropState internal constructor(
             }
         } ?: 0f
     }
-
-    fun LazyListState.getVisibleItemInfoFor(absoluteIndex: Int): LazyListItemInfo? {
-        return this
-            .layoutInfo
-            .visibleItemsInfo
-            .getOrNull(absoluteIndex - this.layoutInfo.visibleItemsInfo.first().index)
-    }
-
-    private val LazyListItemInfo.offsetEnd: Int
-        get() = this.offset + this.size
 }

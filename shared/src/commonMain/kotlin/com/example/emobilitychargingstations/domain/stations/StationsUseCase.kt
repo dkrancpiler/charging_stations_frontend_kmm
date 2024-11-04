@@ -59,9 +59,9 @@ class StationsUseCase(private val stationsRepository: StationsRepository, privat
                         val newStations = getStationsLocal(userInfo, limit)
                         if (stations != newStations) newStations?.let {
                             stations = it
-//                            it.onEach { station ->
-//                                station.randomizeAvailability()
-//                            }
+                            it.onEach { station ->
+                                station.randomizeAvailability()
+                            }
                             send(it)
                         }
                     }

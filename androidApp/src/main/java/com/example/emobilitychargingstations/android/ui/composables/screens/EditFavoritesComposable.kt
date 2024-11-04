@@ -46,7 +46,7 @@ fun EditFavoritesComposable(userViewModel: UserViewModel = koinViewModel()) {
                 items = favorites,
                 onSwap = ::swapItems,
             ) { item ->
-                favoriteItem(item)
+                FavoriteItem(item)
             } else Text(text = "noFavs")
         }
     }
@@ -54,8 +54,8 @@ fun EditFavoritesComposable(userViewModel: UserViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun favoriteItem(favoriteStation: FavoriteStationDataModel) {
-    Column(Modifier.background(Color.White)) {
+private fun FavoriteItem(favoriteStation: FavoriteStationDataModel) {
+    Column(Modifier.background(Color.White).padding(12.dp)) {
         Text(text = favoriteStation.nickname ?: favoriteStation.station.street)
     }
 }
