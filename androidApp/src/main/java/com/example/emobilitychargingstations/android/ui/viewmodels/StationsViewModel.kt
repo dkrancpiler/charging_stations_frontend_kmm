@@ -1,9 +1,9 @@
 package com.example.emobilitychargingstations.android.ui.viewmodels
 
 import android.location.Location
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.comsystoreply.emobilitychargingstations.android.BuildConfig
@@ -15,7 +15,6 @@ import com.example.emobilitychargingstations.models.UserInfo
 import com.example.emobilitychargingstations.models.UserLocation
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
@@ -32,11 +31,11 @@ class StationsViewModel(
         startRepeatingStationsRequest()
     }
 
-    private val _stationsData: MutableState<List<StationsUiModel>?> = mutableStateOf(null)
-    val stationsData: State<List<StationsUiModel>?> = _stationsData
+    var stationsData by mutableStateOf<List<StationsUiModel>?>(null)
+        private set
 
-    private val _userLocation : MutableState<UserLocation?> = mutableStateOf(null)
-    val userLocation: State<UserLocation?> = _userLocation
+    var userLocation by mutableStateOf<UserLocation?>(null)
+        private set
 
     private var stationsJob: Job? = null
 
@@ -44,7 +43,7 @@ class StationsViewModel(
         override fun onLocationResult(locationResult: LocationResult) {
             locationResult.locations.firstOrNull()?.let {
                 if (checkIsDebugLocationMocked(it))  {
-                    setUserLocation(
+                    updateUserLocation(
                         UserLocation(
                             it.latitude,
                             it.longitude
@@ -59,19 +58,19 @@ class StationsViewModel(
         return if (BuildConfig.DEBUG) location.isMock else true
     }
 
-    private fun setUserLocation(newUserLocation: UserLocation) {
+    private fun updateUserLocation(newUserLocation: UserLocation) {
         viewModelScope.launch(Dispatchers.IO) {
             userUseCase.setUserLocation(newUserLocation)
-            _userLocation.value = newUserLocation
+            userLocation = newUserLocation
         }
     }
     fun startRepeatingStationsRequest() {
         if (stationsJob == null) stationsJob =
                 stationsUseCase.startRepeatingRequest().onEach { stationList ->
-                    if (stationList != _stationsData.value) {
-                        _stationsData.value = stationList.map { it.toStationUIModel() }
+                    if (stationList != stationsData) {
+                        stationsData = stationList.map { it.toStationUIModel() }
                     }
-                }.launchIn(CoroutineScope(Dispatchers.IO))
+                }.launchIn(viewModelScope)
     }
 
     fun stopRepeatingStationsRequest() {

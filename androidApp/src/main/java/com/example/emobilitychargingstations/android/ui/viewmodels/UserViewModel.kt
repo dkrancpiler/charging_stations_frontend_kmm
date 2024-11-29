@@ -1,7 +1,9 @@
 package com.example.emobilitychargingstations.android.ui.viewmodels
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
@@ -17,8 +19,8 @@ class UserViewModel(
     private val userUseCase: UserUseCase
 ): ViewModel() {
 
-    private val _userInfo = mutableStateOf<UserInfo?>(null)
-    val userInfo: State<UserInfo?> = _userInfo
+    var userInfo by mutableStateOf<UserInfo?>(null)
+        private set
 
     fun setChargerType(chargerName: ChargerTypesEnum) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -46,9 +48,9 @@ class UserViewModel(
 
     fun getUserInfo(): UserInfo? = userUseCase.getUserInfo()
 
-    private fun onUserInfoChange(userInfo: UserInfo) {
-        if (userInfo != _userInfo.value) {
-            _userInfo.value = userInfo
+    private fun onUserInfoChange(newuserInfo: UserInfo) {
+        if (newuserInfo != userInfo) {
+            userInfo = newuserInfo
         }
     }
 }

@@ -35,8 +35,8 @@ fun MapViewComposable(proceedToSocketSelection: () -> Unit,
     val clusterIcon = BonusPackHelper.getBitmapFromVectorDrawable(LocalContext.current, org.osmdroid.bonuspack.R.drawable.marker_cluster)
     val stationIcon = AppCompatResources.getDrawable(LocalContext.current,R.drawable.electric_car_icon)
 
-    val testStations = stationsViewModel.stationsData.value
-    val userLocation = stationsViewModel.userLocation.value
+    val testStations = stationsViewModel.stationsData
+    val userLocation = stationsViewModel.userLocation
     val mapView = mapViewWithLifecycle()
     ConstraintLayout(modifier = Modifier.fillMaxSize()) {
         val (map, button, progressBar) = createRefs()
